@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:licenta_app/pages/home_screen.dart';
-import '../reusable_widgets/reusable_widget.dart';
-import 'speech_to_text.dart'; // Importă pagina SpeechToTextPage
-import '../utils/color_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../reusable_widgets/reusable_widget.dart';
+import 'home_screen.dart';
+import '../utils/color_utils.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -21,14 +20,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _signUp() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailTextController.text.trim(),
           password: _passwordTextController.text,
         );
+
+        // Update the user's display name with the username
+        await userCredential.user!.updateDisplayName(
+          _userNameTextController.text.trim(),
+        );
+
         // Navigate to HomeScreen upon successful registration
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
         );
       } on FirebaseAuthException catch (e) {
         String message;
@@ -52,12 +60,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Sign Up Failed'),
+        title: const Text('Sign Up Failed'),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -91,7 +99,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 120, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 120, 20, 0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -112,7 +120,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 20),
                   reusableTextField(
                     "Enter Email Id",
-                    Icons.person_outline,
+                    Icons.email_outlined,
                     false,
                     _emailTextController,
                     validator: (value) {

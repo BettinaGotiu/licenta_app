@@ -25,6 +25,7 @@ analysis_options.yaml
 android/.gradle/
 android/.idea/
 android/local.properties
+lib/pages/save_code.dart
 
 # iOS specific files
 ios/.generated/
