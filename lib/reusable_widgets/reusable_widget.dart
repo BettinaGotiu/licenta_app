@@ -75,3 +75,46 @@ Container firebaseUIButton(BuildContext context, String title, Function onTap) {
     ),
   );
 }
+
+Widget buildCard({
+  required String title,
+  required String description,
+  required BuildContext context,
+  required VoidCallback onTap,
+}) {
+  return Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    margin: const EdgeInsets.symmetric(vertical: 10),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: onTap,
+              child: const Text("Go"),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
