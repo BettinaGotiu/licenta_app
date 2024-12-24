@@ -22,6 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _updatePassword() async {
     try {
       await user?.updatePassword(_passwordController.text);
+      Navigator.of(context).pop(); // Close the dialog after updating
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Password updated successfully")),
       );
@@ -30,6 +31,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SnackBar(content: Text("Error updating password: $e")),
       );
     }
+  }
+
+  // Function to show a popup dialog for entering a new password
+  void _showPasswordDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Update Password"),
+          content: TextField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(labelText: "Enter New Password"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(), // Close dialog
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: _updatePassword, // Call the password update function
+              child: const Text("Confirm"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Function to show the delete confirmation dialog
@@ -69,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await user?.delete();
       Navigator.pushReplacementNamed(
-          context, '/signup'); // Navigate to sign-up page
+          context, '/signin'); // Navigate to sign-in screen
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Account deleted successfully")),
       );
@@ -102,19 +130,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Icon(Icons.person, size: 50, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "New Password"),
+            // Display email of the current user
+            Text(
+              "Email: ${user?.email ?? 'Unknown'}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _updatePassword,
+              onPressed: _showPasswordDialog, // Show dialog for password update
               child: const Text("Update Password"),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _confirmDeleteAccount,
+              onPressed: _confirmDeleteAccount, // Show confirmation dialog
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: const Text("Delete Account"),
             ),
