@@ -9,7 +9,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   late User? user;
 
@@ -17,38 +16,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
-    _emailController.text = user?.email ?? '';
   }
 
-  Future<void> _updateEmail() async {
-    try {
-      await user?.updateEmail(_emailController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Email updated successfully")));
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error updating email: $e")));
-    }
-  }
-
+  // Function to update the password
   Future<void> _updatePassword() async {
     try {
       await user?.updatePassword(_passwordController.text);
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Password updated successfully")));
+        const SnackBar(content: Text("Password updated successfully")),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error updating password: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error updating password: $e")),
+      );
     }
   }
 
+  // Function to show the delete confirmation dialog
+  Future<void> _confirmDeleteAccount() async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Account"),
+          content: const Text(
+            "Are you sure you want to delete your account? This action cannot be undone.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      _deleteAccount();
+    }
+  }
+
+  // Function to delete the account
   Future<void> _deleteAccount() async {
     try {
       await user?.delete();
-      Navigator.pushReplacementNamed(context, '/signup');
+      Navigator.pushReplacementNamed(
+          context, '/signup'); // Navigate to sign-up page
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Account deleted successfully")),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error deleting account: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error deleting account: $e")),
+      );
     }
   }
 
@@ -75,23 +103,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 20),
             TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
-            TextField(
               controller: _passwordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: "New Password"),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-                onPressed: _updateEmail, child: const Text("Update Email")),
-            ElevatedButton(
-                onPressed: _updatePassword,
-                child: const Text("Update Password")),
+              onPressed: _updatePassword,
+              child: const Text("Update Password"),
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _deleteAccount,
+              onPressed: _confirmDeleteAccount,
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: const Text("Delete Account"),
             ),
