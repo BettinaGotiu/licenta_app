@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'signin_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -96,8 +97,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _deleteAccount() async {
     try {
       await user?.delete();
-      Navigator.pushReplacementNamed(
-          context, '/signin'); // Navigate to sign-in screen
+      // Navigate to the SignInScreen after successful account deletion
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const SigninScreen()),
+        (route) => false, // Remove all previous routes
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Account deleted successfully")),
       );
