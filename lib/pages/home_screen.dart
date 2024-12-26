@@ -6,6 +6,7 @@ import 'speech_to_text.dart';
 import 'calendar_screen.dart'; // Import for expanded calendar screen
 import 'settings_screen.dart'; // Import for settings page
 import 'domain_selection_screen.dart'; // Import for domain selection page
+import 'daily_challenge_screen.dart'; // Import for daily challenge page
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -137,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SpeechToTextPage(),
+                          builder: (context) => const DailyChallengePage(),
                         ),
                       );
                     },
