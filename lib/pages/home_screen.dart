@@ -5,6 +5,7 @@ import 'signin_screen.dart';
 import 'speech_to_text.dart';
 import 'calendar_screen.dart'; // Import for expanded calendar screen
 import 'settings_screen.dart'; // Import for settings page
+import 'domain_selection_screen.dart'; // Import for domain selection page
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -124,8 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SpeechToTextPage(),
-                        ),
+                            builder: (context) => DomainSelectionPage()),
                       );
                     },
                   ),
