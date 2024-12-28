@@ -1,27 +1,6 @@
-import 'package:flutter/material.dart'; // Biblioteca pentru interfata
-import 'package:speech_to_text/speech_to_text.dart'
-    as stt; // Biblioteca pentru recunoasterea vocala
+import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:async';
-
-// Initializarea si rularea aplicatiei
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Speech to Text Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const SpeechToTextPage(),
-    );
-  }
-}
 
 class SpeechToTextPage extends StatefulWidget {
   const SpeechToTextPage({Key? key}) : super(key: key);
@@ -37,8 +16,8 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   bool _hasSpeechError = false;
 
   Stopwatch _stopwatch = Stopwatch();
-  late Timer _timer;
-  late Timer _wpmTimer;
+  Timer? _timer;
+  Timer? _wpmTimer;
 
   List<String> _recognizedParagraphs = [];
   List<int> _recordingDurations = [];
@@ -52,7 +31,21 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   @override
   void initState() {
     super.initState();
+    _initializeSpeech();
+  }
+
+  void _initializeSpeech() {
     _speech = stt.SpeechToText();
+  }
+
+  @override
+  void dispose() {
+    _stopListening();
+    _speech.stop();
+    _timer?.cancel();
+    _wpmTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   int _countWords(String text) {
@@ -67,6 +60,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   void _startListening() async {
     bool available = await _speech.initialize(
       onStatus: (status) {
+        debugPrint("Status: $status");
         if (status == "done" && _isListening) {
           _stopListening();
         }
@@ -74,7 +68,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       onError: (error) {
         debugPrint("Error: ${error.errorMsg}, permanent: ${error.permanent}");
         if (error.errorMsg == "error_speech_timeout" && _isListening) {
-          _stopListening();
+          _restartListeningOnError();
         } else if (error.errorMsg == "error_no_match") {
           _restartListeningOnError();
         }
@@ -82,6 +76,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     );
 
     if (available) {
+      if (!mounted) return;
       setState(() {
         _isListening = true;
         _currentText = "";
@@ -91,11 +86,16 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
         _currentWpm = 0.0;
       });
 
+      debugPrint("Starting timers...");
+      _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) return;
         setState(() {});
       });
 
+      _wpmTimer?.cancel();
       _wpmTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
+        if (!mounted) return;
         setState(() {
           int wordCount = _countWords(_currentText);
           int elapsedSeconds = _stopwatch.elapsed.inSeconds;
@@ -105,46 +105,54 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
       _speech.listen(
         onResult: (val) {
+          if (!mounted) return;
           setState(() {
             _currentText = val.recognizedWords;
+            debugPrint("Recognized words: $_currentText");
           });
           _scrollToBottom();
         },
         listenMode: stt.ListenMode.dictation,
       );
+    } else {
+      debugPrint("Speech recognition not available");
     }
   }
 
   void _stopListening() {
-    setState(() {
-      _isListening = false;
-      _stopwatch.stop();
+    if (_isListening) {
+      setState(() {
+        _isListening = false;
+        _stopwatch.stop();
 
-      if (_currentText.isNotEmpty) {
-        int duration = _stopwatch.elapsed.inSeconds;
-        int wordCount = _countWords(_currentText);
-        _recognizedParagraphs.add(_currentText);
-        _recordingDurations.add(duration);
-        _wordCounts.add(wordCount);
-        _wpmList.add(_calculateWPM(wordCount, duration));
-      }
-
-      _currentText = "";
-
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (!_hasSpeechError) {
-          _restartListening();
+        if (_currentText.isNotEmpty) {
+          int duration = _stopwatch.elapsed.inSeconds;
+          int wordCount = _countWords(_currentText);
+          _recognizedParagraphs.add(_currentText);
+          _recordingDurations.add(duration);
+          _wordCounts.add(wordCount);
+          _wpmList.add(_calculateWPM(wordCount, duration));
         }
-      });
-    });
 
-    _speech.stop();
-    _timer.cancel();
-    _wpmTimer.cancel();
+        _currentText = "";
+
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (!_hasSpeechError) {
+            _restartListening();
+          }
+        });
+      });
+
+      debugPrint("Stopping timers...");
+      _speech.stop();
+      _timer?.cancel();
+      _wpmTimer?.cancel();
+    }
   }
 
   void _restartListening() {
     if (!_isListening) {
+      debugPrint("Restarting listening...");
       _startListening();
     }
   }
@@ -155,6 +163,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     }
     Future.delayed(const Duration(milliseconds: 200), () {
       if (!_isListening) {
+        debugPrint("Restarting listening on error...");
         _startListening();
       }
     });
@@ -175,6 +184,12 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     _clearScreen();
     _stopwatch.reset();
     _startListening();
+  }
+
+  void _endSession() {
+    _stopListening();
+    _clearScreen();
+    Navigator.pop(context);
   }
 
   void _scrollToBottom() {
@@ -199,6 +214,11 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
             icon: const Icon(Icons.clear),
             onPressed: _clearScreen,
             tooltip: 'Clear Screen',
+          ),
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: _endSession,
+            tooltip: 'End Session',
           ),
         ],
       ),
@@ -288,17 +308,20 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 FloatingActionButton(
+                  heroTag: 'mic',
                   onPressed: _isListening ? _stopListening : _startListening,
                   tooltip: _isListening ? 'Stop Listening' : 'Start Listening',
                   child: Icon(_isListening ? Icons.mic_off : Icons.mic),
                 ),
                 FloatingActionButton(
+                  heroTag: 'new-session',
                   onPressed: _startNewSession,
                   tooltip: 'Start New Session',
                   child: const Icon(Icons.replay),
                 ),
                 if (_isListening)
                   FloatingActionButton(
+                    heroTag: 'wpm',
                     onPressed: () {},
                     tooltip: 'Current WPM',
                     child: Text(_currentWpm.toStringAsFixed(2)),

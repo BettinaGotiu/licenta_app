@@ -113,7 +113,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SpeechToTextPage(),
+                          builder: (context) =>
+                              SpeechToTextPage(key: UniqueKey()),
                         ),
                       );
                     },
@@ -138,8 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const DailyChallengePage(),
-                        ),
+                            builder: (context) => const DailyChallengePage()),
                       );
                     },
                   ),
