@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart'; // Biblioteca pentru interfata
-import 'package:speech_to_text/speech_to_text.dart'
-    as stt; // Biblioteca pentru recunoasterea vocala
+import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:async';
+import 'results_screen.dart';
 
-// Initializarea si rularea aplicatiei
 void main() {
   runApp(const MyApp());
 }
@@ -46,6 +45,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   List<double> _wpmList = [];
 
   double _currentWpm = 0.0;
+  List<double> _wpmHistory = []; // To store WPMs for calculating the average
 
   final ScrollController _scrollController = ScrollController();
 
@@ -120,6 +120,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
           int wordCount = _countWords(_currentText);
           int elapsedSeconds = _stopwatch.elapsed.inSeconds;
           _currentWpm = _calculateWPM(wordCount, elapsedSeconds);
+          _wpmHistory.add(_currentWpm); // Add to WPM history
 
           // Determine the pace limits based on the selected pace
           int lowerLimit, upperLimit;
@@ -180,6 +181,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
         // Immediate WPM calculation for sessions shorter than interval duration
         if (duration < _intervalDuration) {
           _currentWpm = _calculateWPM(wordCount, duration);
+          _wpmHistory.add(_currentWpm); // Add to WPM history
 
           // Determine the pace limits based on the selected pace
           int lowerLimit, upperLimit;
@@ -226,6 +228,26 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     _wpmTimer.cancel();
   }
 
+  void _stopListeningAndNavigate() {
+    _stopListening();
+
+    // Calculate the average WPM
+    double averageWpm = _wpmHistory.isNotEmpty
+        ? _wpmHistory.reduce((a, b) => a + b) / _wpmHistory.length
+        : 0.0;
+
+    // Navigate to results screen with the data
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ResultsScreen(
+          spokenText: _recognizedParagraphs.join(' '),
+          averageWpm: averageWpm,
+        ),
+      ),
+    );
+  }
+
   void _restartListening() {
     if (!_isListening) {
       _startListening();
@@ -249,6 +271,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       _recordingDurations.clear();
       _wordCounts.clear();
       _wpmList.clear();
+      _wpmHistory.clear(); // Clear WPM history
       _currentText = "";
       _currentWpm = 0.0;
       _warningMessage = '';
@@ -459,6 +482,11 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
                   onPressed: _startNewSession,
                   tooltip: 'Start New Session',
                   child: const Icon(Icons.replay),
+                ),
+                FloatingActionButton(
+                  onPressed: _stopListeningAndNavigate,
+                  tooltip: 'Stop and View Results',
+                  child: const Icon(Icons.stop),
                 ),
                 if (_isListening)
                   FloatingActionButton(
