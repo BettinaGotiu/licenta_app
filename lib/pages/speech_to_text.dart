@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:async';
 import 'results_screen.dart';
+import 'common_expressions.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +32,7 @@ class SpeechToTextPage extends StatefulWidget {
 
 class _SpeechToTextPageState extends State<SpeechToTextPage> {
   late stt.SpeechToText _speech;
+  late CommonExpressions _commonExpressions;
   bool _isListening = false;
   String _currentText = "";
   bool _hasSpeechError = false;
@@ -46,6 +48,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
   double _currentWpm = 0.0;
   List<double> _wpmHistory = []; // To store WPMs for calculating the average
+  int _withinLimitCount = 0; // To track the number of WPM within the limits
 
   final ScrollController _scrollController = ScrollController();
 
@@ -59,6 +62,8 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
+    _commonExpressions = CommonExpressions();
+    _commonExpressions.loadExpressions();
   }
 
   int _countWords(String text) {
@@ -149,6 +154,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
             _warningMessage = "Your talking pace is too fast, go slower.";
           } else {
             _warningMessage = "You are right on track, go on!";
+            _withinLimitCount++;
           }
         });
       });
@@ -210,6 +216,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
             _warningMessage = "Your talking pace is too fast, go slower.";
           } else {
             _warningMessage = "You are right on track, go on!";
+            _withinLimitCount++;
           }
         }
       }
@@ -236,6 +243,15 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
         ? _wpmHistory.reduce((a, b) => a + b) / _wpmHistory.length
         : 0.0;
 
+    // Calculate the percentage of time within limits
+    double withinLimitPercentage = _wpmHistory.isNotEmpty
+        ? (_withinLimitCount / _wpmHistory.length) * 100
+        : 0.0;
+
+    // Find common expressions in the recognized text
+    List<String> foundExpressions = _commonExpressions
+        .findCommonExpressions(_recognizedParagraphs.join(' '));
+
     // Navigate to results screen with the data
     Navigator.push(
       context,
@@ -243,6 +259,8 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
         builder: (context) => ResultsScreen(
           spokenText: _recognizedParagraphs.join(' '),
           averageWpm: averageWpm,
+          withinLimitPercentage: withinLimitPercentage,
+          foundExpressions: foundExpressions,
         ),
       ),
     );
@@ -277,6 +295,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       _warningMessage = '';
       _paceSelected = false; // Allow pace selection again
       _selectedPace = null; // Clear selected pace
+      _withinLimitCount = 0; // Reset within limit count
     });
   }
 
