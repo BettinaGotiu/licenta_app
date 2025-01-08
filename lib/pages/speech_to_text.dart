@@ -49,6 +49,9 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
   final ScrollController _scrollController = ScrollController();
 
+  // New variables for pace selection
+  String? _selectedPace;
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +68,16 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   }
 
   void _startListening() async {
+    if (_selectedPace == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a pace before starting."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     bool available = await _speech.initialize(
       onStatus: (status) {
         if (status == "done" && _isListening) {
@@ -204,6 +217,53 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       ),
       body: Column(
         children: <Widget>[
+          // Pace selection buttons
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedPace = "100-130";
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  child: const Text("100-130"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedPace = "130-160";
+                    });
+                  },
+                  style:
+                      ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  child: const Text("130-160"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedPace = "160-210";
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: const Text("160-210"),
+                ),
+              ],
+            ),
+          ),
+          // Display selected pace
+          if (_selectedPace != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Selected Pace: $_selectedPace WPM",
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
           Expanded(
             child: Scrollbar(
               controller: _scrollController,
@@ -279,6 +339,18 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
                     ],
                   ),
                 ),
+              ),
+            ),
+          ),
+          // Text field for warning messages
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              readOnly: true,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Warnings',
+                hintText: 'Warning messages will appear here',
               ),
             ),
           ),
