@@ -49,8 +49,9 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
   final ScrollController _scrollController = ScrollController();
 
-  // New variables for pace selection
+  // New variables for pace selection and warning message
   String? _selectedPace;
+  String _warningMessage = '';
 
   @override
   void initState() {
@@ -113,6 +114,35 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
           int wordCount = _countWords(_currentText);
           int elapsedSeconds = _stopwatch.elapsed.inSeconds;
           _currentWpm = _calculateWPM(wordCount, elapsedSeconds);
+
+          // Determine the pace limits based on the selected pace
+          int lowerLimit, upperLimit;
+          switch (_selectedPace) {
+            case "100-130":
+              lowerLimit = 100;
+              upperLimit = 130;
+              break;
+            case "130-160":
+              lowerLimit = 130;
+              upperLimit = 160;
+              break;
+            case "160-210":
+              lowerLimit = 160;
+              upperLimit = 210;
+              break;
+            default:
+              lowerLimit = 0;
+              upperLimit = 0;
+          }
+
+          // Update the warning message based on the current WPM
+          if (_currentWpm < lowerLimit) {
+            _warningMessage = "You are talking too slow, pick the pace up.";
+          } else if (_currentWpm > upperLimit) {
+            _warningMessage = "Your talking pace is too fast, go slower.";
+          } else {
+            _warningMessage = "You are right on track, go on!";
+          }
         });
       });
 
@@ -181,6 +211,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       _wpmList.clear();
       _currentText = "";
       _currentWpm = 0.0;
+      _warningMessage = '';
     });
   }
 
@@ -352,6 +383,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
                 labelText: 'Warnings',
                 hintText: 'Warning messages will appear here',
               ),
+              controller: TextEditingController(text: _warningMessage),
             ),
           ),
           Padding(
