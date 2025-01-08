@@ -52,6 +52,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   // New variables for pace selection and warning message
   String? _selectedPace;
   String _warningMessage = '';
+  bool _paceSelected = false;
 
   @override
   void initState() {
@@ -78,6 +79,10 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       );
       return;
     }
+
+    setState(() {
+      _paceSelected = true; // Disable pace selection buttons
+    });
 
     bool available = await _speech.initialize(
       onStatus: (status) {
@@ -212,6 +217,8 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       _currentText = "";
       _currentWpm = 0.0;
       _warningMessage = '';
+      _paceSelected = false; // Allow pace selection again
+      _selectedPace = null; // Clear selected pace
     });
   }
 
@@ -255,31 +262,48 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedPace = "100-130";
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  onPressed: _paceSelected
+                      ? null
+                      : () {
+                          setState(() {
+                            _selectedPace = "100-130";
+                          });
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _paceSelected
+                        ? Colors.grey
+                        : Colors.blue, // Disable button color
+                  ),
                   child: const Text("100-130"),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedPace = "130-160";
-                    });
-                  },
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  onPressed: _paceSelected
+                      ? null
+                      : () {
+                          setState(() {
+                            _selectedPace = "130-160";
+                          });
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _paceSelected
+                        ? Colors.grey
+                        : Colors.green, // Disable button color
+                  ),
                   child: const Text("130-160"),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedPace = "160-210";
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: _paceSelected
+                      ? null
+                      : () {
+                          setState(() {
+                            _selectedPace = "160-210";
+                          });
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _paceSelected
+                        ? Colors.grey
+                        : Colors.red, // Disable button color
+                  ),
                   child: const Text("160-210"),
                 ),
               ],
