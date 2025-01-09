@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'common_words.dart'; // Import the common_words file
 
 class ResultsScreen extends StatefulWidget {
   final String spokenText;
@@ -29,21 +30,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   void _countCommonWords() {
-    List<String> commonExpressions = [
-      "basically",
-      "you know",
-      "actually",
-      "literally",
-      "like"
-    ];
-
     // Initialize counts to 0
-    commonExpressions.forEach((expression) {
+    commonWords.forEach((expression) {
       _commonWordCounts[expression] = 0;
     });
 
     // Count occurrences of each expression
-    for (String expression in commonExpressions) {
+    for (String expression in commonWords) {
       _commonWordCounts[expression] =
           _countOccurrences(widget.spokenText, expression);
     }
@@ -66,55 +59,76 @@ class _ResultsScreenState extends State<ResultsScreen> {
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator()) // Display loading widget
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Spoken Text:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    // Make the main content scrollable
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Spoken Text:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            widget.spokenText,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Average Words Per Minute:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            widget.averageWpm.toStringAsFixed(2),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Percentage of Time Within Selected Pace:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            '${widget.withinLimitPercentage.toStringAsFixed(2)}%',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Common Words and Expressions:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          ..._commonWordCounts.entries.map((entry) {
+                            return Text(
+                              '${entry.key}: ${entry.value} times',
+                              style: const TextStyle(fontSize: 16),
+                            );
+                          }).toList(),
+                          const SizedBox(
+                              height: 20), // Add some space at the bottom
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    widget.spokenText,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Average Words Per Minute:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    widget.averageWpm.toStringAsFixed(2),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Percentage of Time Within Selected Pace:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '${widget.withinLimitPercentage.toStringAsFixed(2)}%',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Common Words and Expressions:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  ..._commonWordCounts.entries.map((entry) {
-                    return Text(
-                      '${entry.key}: ${entry.value} times',
-                      style: const TextStyle(fontSize: 16),
-                    );
-                  }).toList(),
-                  const Spacer(),
-                  Center(
-                    child: ElevatedButton(
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  color: Colors.blue,
+                  child: Center(
+                    child: FloatingActionButton(
+                      backgroundColor: Colors.blue,
+                      child: const Icon(Icons.home, color: Colors.white),
                       onPressed: () {
                         Navigator.pushAndRemoveUntil(
                           context,
@@ -123,11 +137,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                           (Route<dynamic> route) => false,
                         );
                       },
-                      child: const Text('Go to Home Screen'),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
     );
   }
