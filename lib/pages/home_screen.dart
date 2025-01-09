@@ -7,6 +7,7 @@ import 'calendar_screen.dart'; // Import for expanded calendar screen
 import 'settings_screen.dart'; // Import for settings page
 import 'domain_selection_screen.dart'; // Import for domain selection page
 import 'daily_challenge_screen.dart'; // Import for daily challenge page
+import 'personalized_words_page.dart'; // Import for personalized words page
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -60,11 +61,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     (route) => false,
                   );
                 });
+              } else if (value == 'Personalized Words') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const PersonalizedWordsPage()),
+                );
               }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'Settings', child: Text('Settings')),
               const PopupMenuItem(value: 'Logout', child: Text('Logout')),
+              const PopupMenuItem(
+                  value: 'Personalized Words',
+                  child: Text('Personalized Words')),
             ],
           ),
         ],
