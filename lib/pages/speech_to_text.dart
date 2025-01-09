@@ -248,10 +248,6 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
         ? (_withinLimitCount / _wpmHistory.length) * 100
         : 0.0;
 
-    // Find common expressions in the recognized text
-    List<String> foundExpressions = _commonExpressions
-        .findCommonExpressions(_recognizedParagraphs.join(' '));
-
     // Navigate to results screen with the data
     Navigator.push(
       context,
@@ -260,7 +256,6 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
           spokenText: _recognizedParagraphs.join(' '),
           averageWpm: averageWpm,
           withinLimitPercentage: withinLimitPercentage,
-          foundExpressions: foundExpressions,
         ),
       ),
     );
