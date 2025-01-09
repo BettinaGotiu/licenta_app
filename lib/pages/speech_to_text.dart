@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:async';
 import 'results_screen.dart';
-import 'common_expressions.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,7 +31,6 @@ class SpeechToTextPage extends StatefulWidget {
 
 class _SpeechToTextPageState extends State<SpeechToTextPage> {
   late stt.SpeechToText _speech;
-  late CommonExpressions _commonExpressions;
   bool _isListening = false;
   String _currentText = "";
   bool _hasSpeechError = false;
@@ -62,8 +60,6 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
-    _commonExpressions = CommonExpressions();
-    _commonExpressions.loadExpressions();
   }
 
   int _countWords(String text) {
