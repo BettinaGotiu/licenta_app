@@ -139,36 +139,43 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ),
             ),
           )
-        : Container(
-            height: 200,
-            child: Chart(
-              layers: [
-                ChartAxisLayer(
-                  settings: ChartAxisSettings(
-                    x: ChartAxisSettingsAxis(
-                      frequency: 1.0,
-                      max: dataPoints.length.toDouble(),
-                      min: 1.0,
-                      textStyle: TextStyle(color: Colors.black, fontSize: 12.0),
+        : SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              width: dataPoints.length *
+                  100, // Adjust the width based on the number of data points
+              height: 200,
+              child: Chart(
+                layers: [
+                  ChartAxisLayer(
+                    settings: ChartAxisSettings(
+                      x: ChartAxisSettingsAxis(
+                        frequency: 1.0,
+                        max: dataPoints.length.toDouble(),
+                        min: 1.0,
+                        textStyle:
+                            TextStyle(color: Colors.black, fontSize: 12.0),
+                      ),
+                      y: ChartAxisSettingsAxis(
+                        frequency: 10.0,
+                        max: 100.0,
+                        min: 0.0,
+                        textStyle:
+                            TextStyle(color: Colors.black, fontSize: 12.0),
+                      ),
                     ),
-                    y: ChartAxisSettingsAxis(
-                      frequency: 10.0,
-                      max: 100.0,
-                      min: 0.0,
-                      textStyle: TextStyle(color: Colors.black, fontSize: 12.0),
+                    labelX: (value) => dateLabels[value.toInt() - 1],
+                    labelY: (value) => value.toString(),
+                  ),
+                  ChartLineLayer(
+                    items: dataPoints,
+                    settings: ChartLineSettings(
+                      color: Colors.blue,
+                      thickness: 2.0,
                     ),
                   ),
-                  labelX: (value) => dateLabels[value.toInt() - 1],
-                  labelY: (value) => value.toString(),
-                ),
-                ChartLineLayer(
-                  items: dataPoints,
-                  settings: ChartLineSettings(
-                    color: Colors.blue,
-                    thickness: 2.0,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
   }
