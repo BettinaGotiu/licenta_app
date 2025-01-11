@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mrx_charts/mrx_charts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'signin_screen.dart';
 import 'speech_to_text.dart';
@@ -167,7 +168,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  _buildSessionList(),
+                  // Line chart
+                  _buildLineChart(),
                 ],
               ),
             ),
@@ -201,7 +203,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSessionList() {
+  Widget _buildLineChart() {
+    List<ChartLineDataItem> dataPoints = _sessions
+        .asMap()
+        .entries
+        .map((entry) => ChartLineDataItem(
+              x: entry.key.toDouble() + 1,
+              value: entry.value['withinLimitPercentage'].toDouble(),
+            ))
+        .toList();
+
     return _sessions.isEmpty
         ? Container(
             height: 200,
@@ -214,21 +225,34 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         : Container(
             height: 200,
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ListView.builder(
-              itemCount: _sessions.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(
-                    'Session ${index + 1}: ${_sessions[index]['withinLimitPercentage'].toString()}%',
-                    style: TextStyle(fontSize: 16),
+            child: Chart(
+              layers: [
+                ChartAxisLayer(
+                  settings: ChartAxisSettings(
+                    x: ChartAxisSettingsAxis(
+                      frequency: 1.0,
+                      max: _sessions.length.toDouble(),
+                      min: 1.0,
+                      textStyle: TextStyle(color: Colors.black, fontSize: 12.0),
+                    ),
+                    y: ChartAxisSettingsAxis(
+                      frequency: 10.0,
+                      max: 100.0,
+                      min: 0.0,
+                      textStyle: TextStyle(color: Colors.black, fontSize: 12.0),
+                    ),
                   ),
-                );
-              },
+                  labelX: (value) => value.toInt().toString(),
+                  labelY: (value) => value.toString(),
+                ),
+                ChartLineLayer(
+                  items: dataPoints,
+                  settings: ChartLineSettings(
+                    color: Colors.blue,
+                    thickness: 2.0,
+                  ),
+                ),
+              ],
             ),
           );
   }
