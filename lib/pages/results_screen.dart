@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'home_screen.dart';
 import 'common_words.dart'; // Import the common_words file
 import 'package:uuid/uuid.dart'; // Import UUID package
+import 'package:intl/intl.dart'; // Import intl package
 
 class ResultsScreen extends StatefulWidget {
   final String spokenText;
@@ -26,7 +26,7 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   late Map<String, int> _commonWordCounts;
   bool _isLoading = true; // For displaying the loading widget
-  double? _lastSessionAverage;
+  double? _lastSessionsAverage;
   List<Map<String, dynamic>> _sessions = [];
 
   @override
@@ -34,7 +34,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     super.initState();
     _commonWordCounts = {};
     _countCommonWords();
-    _fetchPreviousSessionData();
+    _fetchPreviousSessionsData();
   }
 
   void _countCommonWords() {
@@ -55,7 +55,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return regExp.allMatches(text).length;
   }
 
-  Future<void> _fetchPreviousSessionData() async {
+  Future<void> _fetchPreviousSessionsData() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
@@ -65,21 +65,20 @@ class _ResultsScreenState extends State<ResultsScreen> {
           .doc(userId)
           .collection('sessions');
 
-      // Fetch the last session
-      final snapshot =
-          await userCollection.orderBy('date', descending: true).limit(1).get();
+      // Fetch all sessions
+      final snapshot = await userCollection.orderBy('date').get();
 
-      if (snapshot.docs.isNotEmpty) {
-        final lastSession = snapshot.docs.first.data() as Map<String, dynamic>;
-        _lastSessionAverage = lastSession['withinLimitPercentage'] as double?;
-      }
-
-      // Fetch all sessions for the chart
-      final allSessionsSnapshot = await userCollection.orderBy('date').get();
       setState(() {
-        _sessions = allSessionsSnapshot.docs
+        _sessions = snapshot.docs
             .map((doc) => doc.data() as Map<String, dynamic>)
             .toList();
+        _lastSessionsAverage = _sessions.isNotEmpty
+            ? _sessions
+                    .map(
+                        (session) => session['withinLimitPercentage'] as double)
+                    .reduce((a, b) => a + b) /
+                _sessions.length
+            : 0.0;
       });
 
       // Save the current session
@@ -116,10 +115,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ))
         .toList();
 
+    // Add the new session data point
+    dataPoints.add(ChartLineDataItem(
+      x: dataPoints.length + 1.0,
+      value: widget.withinLimitPercentage,
+    ));
+
     List<String> dateLabels = _sessions
         .map((session) => DateFormat('yyyy-MM-dd')
             .format(DateTime.parse(session['date'] as String)))
         .toList();
+
+    // Add label for the new session
+    dateLabels.add(DateFormat('yyyy-MM-dd').format(DateTime.now()));
 
     return _sessions.isEmpty
         ? Container(
@@ -139,7 +147,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   settings: ChartAxisSettings(
                     x: ChartAxisSettingsAxis(
                       frequency: 1.0,
-                      max: _sessions.length.toDouble(),
+                      max: dataPoints.length.toDouble(),
                       min: 1.0,
                       textStyle: TextStyle(color: Colors.black, fontSize: 12.0),
                     ),
@@ -168,16 +176,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
   @override
   Widget build(BuildContext context) {
     String comparisonMessage = '';
-    if (_lastSessionAverage != null) {
-      if (widget.withinLimitPercentage > _lastSessionAverage!) {
+    if (_lastSessionsAverage != null) {
+      double improvement = widget.withinLimitPercentage - _lastSessionsAverage!;
+      if (improvement > 0) {
         comparisonMessage =
-            'Great job! Your within limit percentage has improved compared to your last session.';
-      } else if (widget.withinLimitPercentage < _lastSessionAverage!) {
+            'Great job! Your within limit percentage has improved by ${improvement.toStringAsFixed(2)}% compared to the average of the last sessions.';
+      } else if (improvement < 0) {
         comparisonMessage =
-            'Keep trying! Your within limit percentage is lower than your last session.';
+            'Keep trying! Your within limit percentage is lower by ${improvement.abs().toStringAsFixed(2)}% compared to the average of the last sessions.';
       } else {
         comparisonMessage =
-            'You have maintained the same within limit percentage as your last session.';
+            'You have maintained the same within limit percentage as the average of the last sessions.';
       }
     }
 
@@ -252,7 +261,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                   color: Colors.green),
                             ),
                           const SizedBox(height: 20),
-                          _buildLineChart(), // Add the chart here
+                          _buildLineChart(), // Add the line chart here
                           const SizedBox(
                               height: 20), // Add some space at the bottom
                         ],
