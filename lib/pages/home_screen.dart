@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'signin_screen.dart';
@@ -213,6 +214,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ))
         .toList();
 
+    List<String> dateLabels = _sessions
+        .map((session) => DateFormat('yyyy-MM-dd')
+            .format(DateTime.parse(session['date'] as String)))
+        .toList();
+
     return _sessions.isEmpty
         ? Container(
             height: 200,
@@ -242,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       textStyle: TextStyle(color: Colors.black, fontSize: 12.0),
                     ),
                   ),
-                  labelX: (value) => value.toInt().toString(),
+                  labelX: (value) => dateLabels[value.toInt() - 1],
                   labelY: (value) => value.toString(),
                 ),
                 ChartLineLayer(
