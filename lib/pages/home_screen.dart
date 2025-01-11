@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'signin_screen.dart';
 import 'speech_to_text.dart';
-import 'calendar_screen.dart'; // Import for expanded calendar screen
-import 'settings_screen.dart'; // Import for settings page
-import 'domain_selection_screen.dart'; // Import for domain selection page
-import 'daily_challenge_screen.dart'; // Import for daily challenge page
-import 'personalized_words_page.dart'; // Import for personalized words page
+import 'calendar_screen.dart';
+import 'settings_screen.dart';
+import 'domain_selection_screen.dart';
+import 'daily_challenge_screen.dart';
+import 'personalized_words_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -20,11 +21,28 @@ class _HomeScreenState extends State<HomeScreen> {
   late User? user;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  List<Map<String, dynamic>> _sessions = [];
 
   @override
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
+    _fetchSessionData();
+  }
+
+  Future<void> _fetchSessionData() async {
+    if (user != null) {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('user_data')
+          .doc(user!.uid)
+          .collection('sessions')
+          .orderBy('date')
+          .get();
+
+      setState(() {
+        _sessions = snapshot.docs.map((doc) => doc.data()).toList();
+      });
+    }
   }
 
   @override
@@ -45,14 +63,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             onSelected: (value) {
               if (value == 'Settings') {
-                // Navigate to settings page
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => const SettingsScreen()),
                 );
               } else if (value == 'Logout') {
-                // Logout logic
                 FirebaseAuth.instance.signOut().then((_) {
                   Navigator.pushAndRemoveUntil(
                     context,
@@ -83,10 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Minimalistic calendar
             GestureDetector(
               onTap: () {
-                // Navigate to expanded calendar view
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -104,14 +118,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     _focusedDay = focusedDay;
                   });
                 },
-                calendarFormat: CalendarFormat.week, // Minimalistic row view
-                onFormatChanged: (format) {}, // Disable format change for now
+                calendarFormat: CalendarFormat.week,
+                onFormatChanged: (format) {},
                 onPageChanged: (focusedDay) => _focusedDay = focusedDay,
                 locale: 'en_US',
               ),
             ),
             const SizedBox(height: 20),
-            // Cards layout
             Expanded(
               child: ListView(
                 children: [
@@ -153,6 +166,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                   ),
+                  const SizedBox(height: 20),
+                  _buildSessionList(),
                 ],
               ),
             ),
@@ -184,5 +199,37 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildSessionList() {
+    return _sessions.isEmpty
+        ? Container(
+            height: 200,
+            child: Center(
+              child: Text(
+                'No session data available',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          )
+        : Container(
+            height: 200,
+            padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListView.builder(
+              itemCount: _sessions.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(
+                    'Session ${index + 1}: ${_sessions[index]['withinLimitPercentage'].toString()}%',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                );
+              },
+            ),
+          );
   }
 }
