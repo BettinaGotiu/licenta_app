@@ -28,6 +28,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   bool _isLoading = true; // For displaying the loading widget
   double? _lastSessionsAverage;
   List<Map<String, dynamic>> _sessions = [];
+  Map<String, double> _allTimeAverageWordCounts = {};
 
   @override
   void initState() {
@@ -79,11 +80,32 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     .reduce((a, b) => a + b) /
                 _sessions.length
             : 0.0;
+        _calculateAllTimeAverageWordCounts();
       });
 
       // Save the current session
       await _saveResultsToFirestore(userCollection);
     }
+  }
+
+  void _calculateAllTimeAverageWordCounts() {
+    Map<String, List<int>> wordCounts = {};
+
+    for (var session in _sessions) {
+      Map<String, int> commonWordCounts =
+          Map<String, int>.from(session['commonWordCounts']);
+      commonWordCounts.forEach((word, count) {
+        wordCounts.putIfAbsent(word, () => []);
+        wordCounts[word]?.add(count);
+      });
+    }
+
+    wordCounts.forEach((word, counts) {
+      double averageCount = counts.isNotEmpty
+          ? counts.reduce((a, b) => a + b) / counts.length
+          : 0;
+      _allTimeAverageWordCounts[word] = averageCount;
+    });
   }
 
   Future<void> _saveResultsToFirestore(
@@ -106,7 +128,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget _buildLineChart() {
-    List<ChartLineDataItem> dataPoints = _sessions
+    // Get the last 5 sessions
+    List<Map<String, dynamic>> lastFiveSessions = _sessions
+        .skip(_sessions.length > 5 ? _sessions.length - 5 : 0)
+        .toList();
+
+    List<ChartLineDataItem> dataPoints = lastFiveSessions
         .asMap()
         .entries
         .map((entry) => ChartLineDataItem(
@@ -121,7 +148,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       value: widget.withinLimitPercentage,
     ));
 
-    List<String> dateLabels = _sessions
+    List<String> dateLabels = lastFiveSessions
         .map((session) => DateFormat('yyyy-MM-dd')
             .format(DateTime.parse(session['date'] as String)))
         .toList();
@@ -141,41 +168,96 @@ class _ResultsScreenState extends State<ResultsScreen> {
           )
         : SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Container(
-              width: dataPoints.length *
-                  100, // Adjust the width based on the number of data points
-              height: 200,
-              child: Chart(
-                layers: [
-                  ChartAxisLayer(
-                    settings: ChartAxisSettings(
-                      x: ChartAxisSettingsAxis(
-                        frequency: 1.0,
-                        max: dataPoints.length.toDouble(),
-                        min: 1.0,
-                        textStyle:
-                            TextStyle(color: Colors.black, fontSize: 12.0),
+            child: Column(
+              children: [
+                Container(
+                  width: dataPoints.length *
+                      100, // Adjust the width based on the number of data points
+                  height: 200,
+                  child: Chart(
+                    layers: [
+                      ChartAxisLayer(
+                        settings: ChartAxisSettings(
+                          x: ChartAxisSettingsAxis(
+                            frequency: 1.0,
+                            max: dataPoints.length.toDouble(),
+                            min: 1.0,
+                            textStyle:
+                                TextStyle(color: Colors.black, fontSize: 12.0),
+                          ),
+                          y: ChartAxisSettingsAxis(
+                            frequency: 10.0,
+                            max: 100.0,
+                            min: 0.0,
+                            textStyle:
+                                TextStyle(color: Colors.black, fontSize: 12.0),
+                          ),
+                        ),
+                        labelX: (value) => dateLabels[value.toInt() - 1],
+                        labelY: (value) => value.toString(),
                       ),
-                      y: ChartAxisSettingsAxis(
-                        frequency: 10.0,
-                        max: 100.0,
-                        min: 0.0,
-                        textStyle:
-                            TextStyle(color: Colors.black, fontSize: 12.0),
+                      ChartLineLayer(
+                        items: dataPoints,
+                        settings: ChartLineSettings(
+                          color: Colors.blue,
+                          thickness: 2.0,
+                        ),
                       ),
-                    ),
-                    labelX: (value) => dateLabels[value.toInt() - 1],
-                    labelY: (value) => value.toString(),
+                    ],
                   ),
-                  ChartLineLayer(
-                    items: dataPoints,
-                    settings: ChartLineSettings(
-                      color: Colors.blue,
-                      thickness: 2.0,
+                ),
+                SizedBox(
+                  height: 20,
+                  child: Center(
+                    child: Text(
+                      'Scroll for more data',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ),
-                ],
+                )
+              ],
+            ),
+          );
+  }
+
+  Widget _buildGroupBarChart() {
+    List<ChartGroupBarDataItem> currentSessionItems = _commonWordCounts.entries
+        .where((entry) => entry.value > 2)
+        .map((entry) => ChartGroupBarDataItem(
+              color: Colors.blue,
+              value: entry.value.toDouble(),
+              x: _commonWordCounts.keys.toList().indexOf(entry.key).toDouble(),
+            ))
+        .toList();
+
+    List<ChartGroupBarDataItem> averageSessionItems = _commonWordCounts.entries
+        .where((entry) => entry.value > 2)
+        .map((entry) => ChartGroupBarDataItem(
+              color: Colors.red,
+              value: _allTimeAverageWordCounts[entry.key] ?? 0,
+              x: _commonWordCounts.keys.toList().indexOf(entry.key).toDouble(),
+            ))
+        .toList();
+
+    return currentSessionItems.isEmpty
+        ? Container(
+            height: 200,
+            child: Center(
+              child: Text(
+                'No common words repeated more than 2 times',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
+            ),
+          )
+        : Container(
+            height: 200,
+            child: Chart(
+              layers: [
+                ChartGroupBarLayer(
+                  items: [currentSessionItems, averageSessionItems],
+                  settings: ChartGroupBarSettings(),
+                ),
+              ],
             ),
           );
   }
@@ -214,17 +296,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Spoken Text:',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            widget.spokenText,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
                             'Average Words Per Minute:',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
@@ -246,19 +317,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                             style: const TextStyle(fontSize: 16),
                           ),
                           const SizedBox(height: 20),
-                          const Text(
-                            'Common Words and Expressions:',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          ..._commonWordCounts.entries.map((entry) {
-                            return Text(
-                              '${entry.key}: ${entry.value} times',
-                              style: const TextStyle(fontSize: 16),
-                            );
-                          }).toList(),
-                          const SizedBox(height: 20),
                           if (comparisonMessage.isNotEmpty)
                             Text(
                               comparisonMessage,
@@ -271,6 +329,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
                           _buildLineChart(), // Add the line chart here
                           const SizedBox(
                               height: 20), // Add some space at the bottom
+                          const Text(
+                            'Common Words and Expressions:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          _buildGroupBarChart(),
                         ],
                       ),
                     ),
