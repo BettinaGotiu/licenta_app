@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../reusable_widgets/reusable_widget.dart';
 import 'home_screen.dart';
 import '../utils/color_utils.dart';
@@ -30,6 +31,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
         await userCredential.user!.updateDisplayName(
           _userNameTextController.text.trim(),
         );
+
+        // Create a collection for the user in Firestore
+        await FirebaseFirestore.instance
+            .collection('user_data')
+            .doc(userCredential.user!.uid)
+            .set({
+          'email': _emailTextController.text.trim(),
+          'username': _userNameTextController.text.trim(),
+        });
 
         // Navigate to HomeScreen upon successful registration
         Navigator.pushReplacement(

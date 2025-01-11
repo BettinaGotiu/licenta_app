@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'common_words.dart'; // Import the common_words file
+import 'package:uuid/uuid.dart'; // Import UUID package
 
 class ResultsScreen extends StatefulWidget {
   final String spokenText;
@@ -27,6 +30,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     super.initState();
     _commonWordCounts = {};
     _countCommonWords();
+    _saveResultsToFirestore();
   }
 
   void _countCommonWords() {
@@ -49,6 +53,30 @@ class _ResultsScreenState extends State<ResultsScreen> {
   int _countOccurrences(String text, String pattern) {
     RegExp regExp = RegExp(RegExp.escape(pattern), caseSensitive: false);
     return regExp.allMatches(text).length;
+  }
+
+  void _saveResultsToFirestore() async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      String userId = user.uid;
+      CollectionReference userCollection = FirebaseFirestore.instance
+          .collection('user_data')
+          .doc(userId)
+          .collection('sessions');
+
+      // Generate a unique ID for the session
+      String sessionId = Uuid().v4();
+
+      // Save the session data as a new document
+      await userCollection.doc(sessionId).set({
+        'averageWpm': widget.averageWpm,
+        'date': DateTime.now().toIso8601String(),
+        'withinLimitPercentage': widget.withinLimitPercentage,
+        'spokenText': widget.spokenText,
+        'commonWordCounts': _commonWordCounts,
+      });
+    }
   }
 
   @override
