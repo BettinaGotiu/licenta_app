@@ -175,7 +175,8 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       if (_currentText.isNotEmpty) {
         int duration = _stopwatch.elapsed.inSeconds;
         int wordCount = _countWords(_currentText);
-        _recognizedParagraphs.add(_currentText);
+        _recognizedParagraphs
+            .add(_currentText + "."); // Add a . after each paragraph
         _recordingDurations.add(duration);
         _wordCounts.add(wordCount);
         _wpmList.add(_calculateWPM(wordCount, duration));
