@@ -28,6 +28,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   bool _isLoading = true; // For displaying the loading widget
   double? _lastSessionsAverage;
   List<Map<String, dynamic>> _sessions = [];
+  Map<String, double> _averageWordCounts = {};
 
   @override
   void initState() {
@@ -81,9 +82,36 @@ class _ResultsScreenState extends State<ResultsScreen> {
             : 0.0;
       });
 
+      // Calculate the average occurrences of each word
+      _calculateAverageWordCounts();
+
       // Save the current session
       await _saveResultsToFirestore(userCollection);
     }
+  }
+
+  void _calculateAverageWordCounts() {
+    Map<String, int> totalWordCounts = {};
+
+    // Initialize counts to 0
+    commonWords.forEach((expression) {
+      totalWordCounts[expression] = 0;
+    });
+
+    // Sum occurrences of each expression across all sessions
+    for (var session in _sessions) {
+      Map<String, int> sessionWordCounts =
+          Map<String, int>.from(session['commonWordCounts']);
+      sessionWordCounts.forEach((word, count) {
+        totalWordCounts[word] = (totalWordCounts[word] ?? 0) + count;
+      });
+    }
+
+    // Calculate the average occurrences
+    int sessionCount = _sessions.length;
+    totalWordCounts.forEach((word, totalCount) {
+      _averageWordCounts[word] = totalCount / sessionCount;
+    });
   }
 
   Future<void> _saveResultsToFirestore(
@@ -197,6 +225,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
       }
     }
 
+    bool hasCommonWords = _commonWordCounts.values.any((count) => count >= 2);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Results'),
@@ -252,12 +282,27 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
-                          ..._commonWordCounts.entries.map((entry) {
-                            return Text(
-                              '${entry.key}: ${entry.value} times',
-                              style: const TextStyle(fontSize: 16),
-                            );
-                          }).toList(),
+                          if (hasCommonWords)
+                            ..._commonWordCounts.entries
+                                .where((entry) => entry.value >= 2)
+                                .map((entry) {
+                              double averageCount =
+                                  _averageWordCounts[entry.key] ?? 0.0;
+                              double percentageDifference =
+                                  ((entry.value - averageCount) /
+                                          averageCount) *
+                                      100;
+                              return Text(
+                                '${entry.key}: ${entry.value} times (current session is ${percentageDifference.toStringAsFixed(2)}% compared to the average)',
+                                style: const TextStyle(fontSize: 16),
+                              );
+                            }).toList()
+                          else
+                            Text(
+                              'Great job! No common words appeared more than twice.',
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
                           const SizedBox(height: 20),
                           if (comparisonMessage.isNotEmpty)
                             Text(
