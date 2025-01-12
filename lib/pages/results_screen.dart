@@ -135,7 +135,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget _buildLineChart() {
-    List<ChartLineDataItem> dataPoints = _sessions
+    // Get the last 5 sessions
+    List<Map<String, dynamic>> sessionsToShow = _sessions
+        .skip(_sessions.length > 5 ? _sessions.length - 5 : 0)
+        .toList();
+
+    List<ChartLineDataItem> dataPoints = sessionsToShow
         .asMap()
         .entries
         .map((entry) => ChartLineDataItem(
@@ -144,19 +149,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ))
         .toList();
 
-    // Add the new session data point
-    dataPoints.add(ChartLineDataItem(
-      x: dataPoints.length + 1.0,
-      value: widget.withinLimitPercentage,
-    ));
-
-    List<String> dateLabels = _sessions
+    List<String> dateLabels = sessionsToShow
         .map((session) => DateFormat('yyyy-MM-dd')
             .format(DateTime.parse(session['date'] as String)))
         .toList();
-
-    // Add label for the new session
-    dateLabels.add(DateFormat('yyyy-MM-dd').format(DateTime.now()));
 
     return _sessions.isEmpty
         ? Container(
