@@ -276,6 +276,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                             style: const TextStyle(fontSize: 16),
                           ),
                           const SizedBox(height: 20),
+                          _buildLineChart(), // Add the line chart here
+                          const SizedBox(height: 20),
                           const Text(
                             'Common Words and Expressions:',
                             style: TextStyle(
@@ -313,7 +315,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                   color: Colors.green),
                             ),
                           const SizedBox(height: 20),
-                          _buildLineChart(), // Add the line chart here
                           const SizedBox(
                               height: 20), // Add some space at the bottom
                         ],
