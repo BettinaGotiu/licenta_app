@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'home_screen.dart';
 import 'common_words.dart'; // Import the common_words file
 import 'package:uuid/uuid.dart'; // Import UUID package
-import 'package:intl/intl.dart'; // Import intl package
 
 class ResultsScreen extends StatefulWidget {
   final String spokenText;
@@ -26,7 +26,7 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   late Map<String, int> _commonWordCounts;
   bool _isLoading = true; // For displaying the loading widget
-  double? _lastSessionsAverage;
+  double? _lastSessionAverage;
   List<Map<String, dynamic>> _sessions = [];
   Map<String, double> _allTimeAverageWordCounts = {};
 
@@ -35,7 +35,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     super.initState();
     _commonWordCounts = {};
     _countCommonWords();
-    _fetchPreviousSessionsData();
+    _fetchPreviousSessionData();
   }
 
   void _countCommonWords() {
@@ -56,7 +56,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return regExp.allMatches(text).length;
   }
 
-  Future<void> _fetchPreviousSessionsData() async {
+  Future<void> _fetchPreviousSessionData() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
@@ -66,20 +66,21 @@ class _ResultsScreenState extends State<ResultsScreen> {
           .doc(userId)
           .collection('sessions');
 
-      // Fetch all sessions
-      final snapshot = await userCollection.orderBy('date').get();
+      // Fetch the last session
+      final snapshot =
+          await userCollection.orderBy('date', descending: true).limit(1).get();
 
+      if (snapshot.docs.isNotEmpty) {
+        final lastSession = snapshot.docs.first.data() as Map<String, dynamic>;
+        _lastSessionAverage = lastSession['withinLimitPercentage'] as double?;
+      }
+
+      // Fetch all sessions for the chart
+      final allSessionsSnapshot = await userCollection.orderBy('date').get();
       setState(() {
-        _sessions = snapshot.docs
+        _sessions = allSessionsSnapshot.docs
             .map((doc) => doc.data() as Map<String, dynamic>)
             .toList();
-        _lastSessionsAverage = _sessions.isNotEmpty
-            ? _sessions
-                    .map(
-                        (session) => session['withinLimitPercentage'] as double)
-                    .reduce((a, b) => a + b) /
-                _sessions.length
-            : 0.0;
         _calculateAllTimeAverageWordCounts();
       });
 
@@ -168,96 +169,41 @@ class _ResultsScreenState extends State<ResultsScreen> {
           )
         : SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Column(
-              children: [
-                Container(
-                  width: dataPoints.length *
-                      100, // Adjust the width based on the number of data points
-                  height: 200,
-                  child: Chart(
-                    layers: [
-                      ChartAxisLayer(
-                        settings: ChartAxisSettings(
-                          x: ChartAxisSettingsAxis(
-                            frequency: 1.0,
-                            max: dataPoints.length.toDouble(),
-                            min: 1.0,
-                            textStyle:
-                                TextStyle(color: Colors.black, fontSize: 12.0),
-                          ),
-                          y: ChartAxisSettingsAxis(
-                            frequency: 10.0,
-                            max: 100.0,
-                            min: 0.0,
-                            textStyle:
-                                TextStyle(color: Colors.black, fontSize: 12.0),
-                          ),
-                        ),
-                        labelX: (value) => dateLabels[value.toInt() - 1],
-                        labelY: (value) => value.toString(),
+            child: Container(
+              width: dataPoints.length *
+                  100, // Adjust the width based on the number of data points
+              height: 200,
+              child: Chart(
+                layers: [
+                  ChartAxisLayer(
+                    settings: ChartAxisSettings(
+                      x: ChartAxisSettingsAxis(
+                        frequency: 1.0,
+                        max: dataPoints.length.toDouble(),
+                        min: 1.0,
+                        textStyle:
+                            TextStyle(color: Colors.black, fontSize: 12.0),
                       ),
-                      ChartLineLayer(
-                        items: dataPoints,
-                        settings: ChartLineSettings(
-                          color: Colors.blue,
-                          thickness: 2.0,
-                        ),
+                      y: ChartAxisSettingsAxis(
+                        frequency: 10.0,
+                        max: 100.0,
+                        min: 0.0,
+                        textStyle:
+                            TextStyle(color: Colors.black, fontSize: 12.0),
                       ),
-                    ],
+                    ),
+                    labelX: (value) => dateLabels[value.toInt() - 1],
+                    labelY: (value) => value.toString(),
                   ),
-                ),
-                SizedBox(
-                  height: 20,
-                  child: Center(
-                    child: Text(
-                      'Scroll for more data',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ChartLineLayer(
+                    items: dataPoints,
+                    settings: ChartLineSettings(
+                      color: Colors.blue,
+                      thickness: 2.0,
                     ),
                   ),
-                )
-              ],
-            ),
-          );
-  }
-
-  Widget _buildGroupBarChart() {
-    List<ChartGroupBarDataItem> currentSessionItems = _commonWordCounts.entries
-        .where((entry) => entry.value > 2)
-        .map((entry) => ChartGroupBarDataItem(
-              color: Colors.blue,
-              value: entry.value.toDouble(),
-              x: _commonWordCounts.keys.toList().indexOf(entry.key).toDouble(),
-            ))
-        .toList();
-
-    List<ChartGroupBarDataItem> averageSessionItems = _commonWordCounts.entries
-        .where((entry) => entry.value > 2)
-        .map((entry) => ChartGroupBarDataItem(
-              color: Colors.red,
-              value: _allTimeAverageWordCounts[entry.key] ?? 0,
-              x: _commonWordCounts.keys.toList().indexOf(entry.key).toDouble(),
-            ))
-        .toList();
-
-    return currentSessionItems.isEmpty
-        ? Container(
-            height: 200,
-            child: Center(
-              child: Text(
-                'No common words repeated more than 2 times',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ],
               ),
-            ),
-          )
-        : Container(
-            height: 200,
-            child: Chart(
-              layers: [
-                ChartGroupBarLayer(
-                  items: [currentSessionItems, averageSessionItems],
-                  settings: ChartGroupBarSettings(),
-                ),
-              ],
             ),
           );
   }
@@ -265,18 +211,60 @@ class _ResultsScreenState extends State<ResultsScreen> {
   @override
   Widget build(BuildContext context) {
     String comparisonMessage = '';
-    if (_lastSessionsAverage != null) {
-      double improvement = widget.withinLimitPercentage - _lastSessionsAverage!;
-      if (improvement > 0) {
+    if (_lastSessionAverage != null) {
+      if (widget.withinLimitPercentage > _lastSessionAverage!) {
         comparisonMessage =
-            'Great job! Your within limit percentage has improved by ${improvement.toStringAsFixed(2)}% compared to the average of the last sessions.';
-      } else if (improvement < 0) {
+            'Great job! Your within limit percentage has improved compared to your last session.';
+      } else if (widget.withinLimitPercentage < _lastSessionAverage!) {
         comparisonMessage =
-            'Keep trying! Your within limit percentage is lower by ${improvement.abs().toStringAsFixed(2)}% compared to the average of the last sessions.';
+            'Keep trying! Your within limit percentage is lower than your last session.';
       } else {
         comparisonMessage =
-            'You have maintained the same within limit percentage as the average of the last sessions.';
+            'You have maintained the same within limit percentage as your last session.';
       }
+    }
+
+    List<Widget> wordWidgets = _commonWordCounts.entries
+        .where((entry) => entry.value > 2)
+        .map((entry) {
+      double averageCount = _allTimeAverageWordCounts[entry.key] ?? 0;
+      double percentageChange = averageCount > 0
+          ? ((entry.value - averageCount) / averageCount) * 100
+          : 0;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${entry.key}: used ${entry.value} times in your speech.',
+            style: const TextStyle(fontSize: 16),
+          ),
+          if (averageCount > 0)
+            Text(
+              'Compared to the average of ${averageCount.toStringAsFixed(2)} times in previous sessions.',
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+          Text(
+            'Change: ${(percentageChange > 0 ? '+' : '')}${percentageChange.toStringAsFixed(2)}%',
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Advice: Try to avoid using "${entry.key}" too often in the future.',
+            style: const TextStyle(fontSize: 14, color: Colors.red),
+          ),
+          const SizedBox(height: 10),
+        ],
+      );
+    }).toList();
+
+    if (wordWidgets.isEmpty) {
+      wordWidgets.add(
+        Text(
+          'Congratulations! You did not repeat any common words more than 2 times.',
+          style: TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+        ),
+      );
     }
 
     return Scaffold(
@@ -317,6 +305,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                             style: const TextStyle(fontSize: 16),
                           ),
                           const SizedBox(height: 20),
+                          _buildLineChart(), // Add the line chart here
+                          const SizedBox(height: 20),
                           if (comparisonMessage.isNotEmpty)
                             Text(
                               comparisonMessage,
@@ -326,16 +316,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                   color: Colors.green),
                             ),
                           const SizedBox(height: 20),
-                          _buildLineChart(), // Add the line chart here
-                          const SizedBox(
-                              height: 20), // Add some space at the bottom
                           const Text(
                             'Common Words and Expressions:',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
-                          _buildGroupBarChart(),
+                          ...wordWidgets,
                         ],
                       ),
                     ),
