@@ -36,6 +36,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   bool _hasSpeechError = false;
 
   Stopwatch _stopwatch = Stopwatch();
+  Stopwatch _elapsedStopwatch = Stopwatch();
   late Timer _timer;
   late Timer _wpmTimer;
 
@@ -45,16 +46,16 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   List<double> _wpmList = [];
 
   double _currentWpm = 0.0;
-  List<double> _wpmHistory = []; // To store WPMs for calculating the average
-  int _withinLimitCount = 0; // To track the number of WPM within the limits
+  List<double> _wpmHistory = [];
+  int _withinLimitCount = 0;
 
   final ScrollController _scrollController = ScrollController();
 
-  // New variables for pace selection and warning message
   String? _selectedPace;
   String _warningMessage = '';
   bool _paceSelected = false;
-  final int _intervalDuration = 6; // Interval duration in seconds
+  final int _intervalDuration = 6;
+  int _listeningSessionCounter = 0;
 
   @override
   void initState() {
@@ -83,7 +84,11 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     }
 
     setState(() {
-      _paceSelected = true; // Disable pace selection buttons
+      _paceSelected = true;
+      _listeningSessionCounter++;
+      if (_listeningSessionCounter == 1) {
+        _elapsedStopwatch.start();
+      }
     });
 
     bool available = await _speech.initialize(
@@ -121,9 +126,8 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
           int wordCount = _countWords(_currentText);
           int elapsedSeconds = _stopwatch.elapsed.inSeconds;
           _currentWpm = _calculateWPM(wordCount, elapsedSeconds);
-          _wpmHistory.add(_currentWpm); // Add to WPM history
+          _wpmHistory.add(_currentWpm);
 
-          // Determine the pace limits based on the selected pace
           int lowerLimit, upperLimit;
           switch (_selectedPace) {
             case "100-130":
@@ -143,7 +147,6 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
               upperLimit = 0;
           }
 
-          // Update the warning message based on the current WPM
           if (_currentWpm < lowerLimit) {
             _warningMessage = "You are talking too slow, pick the pace up.";
           } else if (_currentWpm > upperLimit) {
@@ -175,18 +178,15 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       if (_currentText.isNotEmpty) {
         int duration = _stopwatch.elapsed.inSeconds;
         int wordCount = _countWords(_currentText);
-        _recognizedParagraphs
-            .add(_currentText + "."); // Add a . after each paragraph
+        _recognizedParagraphs.add(_currentText + ".");
         _recordingDurations.add(duration);
         _wordCounts.add(wordCount);
         _wpmList.add(_calculateWPM(wordCount, duration));
 
-        // Immediate WPM calculation for sessions shorter than interval duration
         if (duration < _intervalDuration) {
           _currentWpm = _calculateWPM(wordCount, duration);
-          _wpmHistory.add(_currentWpm); // Add to WPM history
+          _wpmHistory.add(_currentWpm);
 
-          // Determine the pace limits based on the selected pace
           int lowerLimit, upperLimit;
           switch (_selectedPace) {
             case "100-130":
@@ -206,7 +206,6 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
               upperLimit = 0;
           }
 
-          // Update the warning message based on the current WPM
           if (_currentWpm < lowerLimit) {
             _warningMessage = "You are talking too slow, pick the pace up.";
           } else if (_currentWpm > upperLimit) {
@@ -234,18 +233,16 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
   void _stopListeningAndNavigate() {
     _stopListening();
+    _elapsedStopwatch.stop();
 
-    // Calculate the average WPM
     double averageWpm = _wpmHistory.isNotEmpty
         ? _wpmHistory.reduce((a, b) => a + b) / _wpmHistory.length
         : 0.0;
 
-    // Calculate the percentage of time within limits
     double withinLimitPercentage = _wpmHistory.isNotEmpty
         ? (_withinLimitCount / _wpmHistory.length) * 100
         : 0.0;
 
-    // Navigate to results screen with the data
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -281,13 +278,15 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       _recordingDurations.clear();
       _wordCounts.clear();
       _wpmList.clear();
-      _wpmHistory.clear(); // Clear WPM history
+      _wpmHistory.clear();
       _currentText = "";
       _currentWpm = 0.0;
       _warningMessage = '';
-      _paceSelected = false; // Allow pace selection again
-      _selectedPace = null; // Clear selected pace
-      _withinLimitCount = 0; // Reset within limit count
+      _paceSelected = false;
+      _selectedPace = null;
+      _withinLimitCount = 0;
+      _listeningSessionCounter = 0;
+      _elapsedStopwatch.reset();
     });
   }
 
@@ -309,6 +308,43 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     });
   }
 
+  Color _getCircleColor() {
+    if (_wpmHistory.isEmpty) {
+      return Colors.grey;
+    }
+
+    int lowerLimit, upperLimit;
+    switch (_selectedPace) {
+      case "100-130":
+        lowerLimit = 100;
+        upperLimit = 130;
+        break;
+      case "130-160":
+        lowerLimit = 130;
+        upperLimit = 160;
+        break;
+      case "160-210":
+        lowerLimit = 160;
+        upperLimit = 210;
+        break;
+      default:
+        lowerLimit = 0;
+        upperLimit = 0;
+    }
+
+    if (_currentWpm == 0) {
+      return Colors.grey;
+    } else if (_currentWpm < lowerLimit * 0.95) {
+      return Colors.red;
+    } else if (_currentWpm > upperLimit * 1.05) {
+      return Colors.red;
+    } else if (_currentWpm < lowerLimit || _currentWpm > upperLimit) {
+      return Colors.yellow;
+    } else {
+      return Colors.green;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -324,7 +360,6 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       ),
       body: Column(
         children: <Widget>[
-          // Pace selection buttons
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -339,9 +374,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
                           });
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _paceSelected
-                        ? Colors.grey
-                        : Colors.blue, // Disable button color
+                    backgroundColor: _paceSelected ? Colors.grey : Colors.blue,
                   ),
                   child: const Text("100-130"),
                 ),
@@ -354,9 +387,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
                           });
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _paceSelected
-                        ? Colors.grey
-                        : Colors.green, // Disable button color
+                    backgroundColor: _paceSelected ? Colors.grey : Colors.green,
                   ),
                   child: const Text("130-160"),
                 ),
@@ -369,16 +400,13 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
                           });
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _paceSelected
-                        ? Colors.grey
-                        : Colors.red, // Disable button color
+                    backgroundColor: _paceSelected ? Colors.grey : Colors.red,
                   ),
                   child: const Text("160-210"),
                 ),
               ],
             ),
           ),
-          // Display selected pace
           if (_selectedPace != null)
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -389,94 +417,42 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
               ),
             ),
           Expanded(
-            child: Scrollbar(
-              controller: _scrollController,
-              thumbVisibility: true,
-              thickness: 10,
-              radius: const Radius.circular(10),
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                child: Container(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ..._recognizedParagraphs.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final paragraph = entry.value;
-                        final duration = _recordingDurations[index];
-                        final wordCount = _wordCounts[index];
-                        final wpm = _wpmList[index];
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      paragraph,
-                                      style: const TextStyle(
-                                        fontSize: 20.0,
-                                        color: Color.fromARGB(255, 147, 70, 70),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'Duration: $duration seconds, Words: $wordCount, WPM: ${wpm.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontSize: 16.0,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      if (_currentText.isNotEmpty)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _currentText,
-                                style: const TextStyle(
-                                  fontSize: 24.0,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _getCircleColor(),
+                      ),
+                    ),
+                    Text(
+                      formatElapsedTime(_elapsedStopwatch.elapsed),
+                      style: const TextStyle(
+                        fontSize: 48,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Warnings',
+                      hintText: 'Warning messages will appear here',
+                    ),
+                    controller: TextEditingController(text: _warningMessage),
                   ),
                 ),
-              ),
-            ),
-          ),
-          // Text field for warning messages
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              readOnly: true,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Warnings',
-                hintText: 'Warning messages will appear here',
-              ),
-              controller: TextEditingController(text: _warningMessage),
+              ],
             ),
           ),
           Padding(
@@ -511,5 +487,12 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
         ],
       ),
     );
+  }
+
+  String formatElapsedTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
   }
 }
