@@ -29,6 +29,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   double? _lastSessionsAverage;
   List<Map<String, dynamic>> _sessions = [];
   Map<String, double> _averageWordCounts = {};
+  bool _showText = false; // For showing/hiding the text
 
   @override
   void initState() {
@@ -208,6 +209,50 @@ class _ResultsScreenState extends State<ResultsScreen> {
           );
   }
 
+  void _showSpokenTextPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Spoken Text"),
+          content: SingleChildScrollView(
+            child: RichText(
+              text: TextSpan(
+                children: _buildHighlightedText(widget.spokenText),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  List<TextSpan> _buildHighlightedText(String text) {
+    List<TextSpan> spans = [];
+    text.split(' ').forEach((word) {
+      if (_commonWordCounts.containsKey(word.toLowerCase()) &&
+          _commonWordCounts[word.toLowerCase()]! > 2) {
+        spans.add(TextSpan(
+            text: '$word ',
+            style: TextStyle(
+                color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)));
+      } else {
+        spans.add(TextSpan(
+            text: '$word ',
+            style: TextStyle(fontSize: 16, color: Colors.black)));
+      }
+    });
+    return spans;
+  }
+
   @override
   Widget build(BuildContext context) {
     String comparisonMessage = '';
@@ -244,17 +289,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Spoken Text:',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            widget.spokenText,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
                             'Average Words Per Minute:',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
@@ -278,6 +312,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
                           const SizedBox(height: 20),
                           _buildLineChart(), // Add the line chart here
                           const SizedBox(height: 20),
+                          if (comparisonMessage.isNotEmpty)
+                            Text(
+                              comparisonMessage,
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green),
+                            ),
+                          const SizedBox(height: 20),
                           const Text(
                             'Common Words and Expressions:',
                             style: TextStyle(
@@ -295,7 +338,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                           averageCount) *
                                       100;
                               return Text(
-                                '${entry.key}: ${entry.value} times (current session is ${percentageDifference.toStringAsFixed(2)}% compared to the average)',
+                                '${entry.key}: ${entry.value} times (current session is ${percentageDifference.toStringAsFixed(2)}% compared to the average of ${averageCount.toStringAsFixed(2)} occurrences/session)',
                                 style: const TextStyle(fontSize: 16),
                               );
                             }).toList()
@@ -306,15 +349,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                   fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                           const SizedBox(height: 20),
-                          if (comparisonMessage.isNotEmpty)
-                            Text(
-                              comparisonMessage,
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green),
-                            ),
-                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: _showSpokenTextPopup,
+                            child: Text("Show Appearances"),
+                          ),
                           const SizedBox(
                               height: 20), // Add some space at the bottom
                         ],
