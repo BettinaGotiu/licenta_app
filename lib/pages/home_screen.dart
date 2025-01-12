@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   List<Map<String, dynamic>> _sessions = [];
+  bool _showLastFiveSessions = true;
 
   @override
   void initState() {
@@ -47,8 +48,96 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  List<DateTime> _getCompletedSessionDates() {
+    return _sessions
+        .map((session) => DateTime.parse(session['date'] as String))
+        .toList();
+  }
+
+  Widget _buildLineChart() {
+    List<Map<String, dynamic>> sessionsToShow = _showLastFiveSessions
+        ? _sessions
+            .skip(_sessions.length > 5 ? _sessions.length - 5 : 0)
+            .toList()
+        : _sessions;
+
+    List<ChartLineDataItem> dataPoints = sessionsToShow
+        .asMap()
+        .entries
+        .map((entry) => ChartLineDataItem(
+              x: entry.key.toDouble() + 1,
+              value: entry.value['withinLimitPercentage'].toDouble(),
+            ))
+        .toList();
+
+    List<String> dateLabels = sessionsToShow
+        .map((session) => DateFormat('yyyy-MM-dd')
+            .format(DateTime.parse(session['date'] as String)))
+        .toList();
+
+    return _sessions.isEmpty
+        ? Container(
+            height: 200,
+            child: Center(
+              child: Text(
+                'No session data available',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          )
+        : Column(
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Container(
+                  width: dataPoints.length * 100.0,
+                  height: 200,
+                  child: Chart(
+                    layers: [
+                      ChartAxisLayer(
+                        settings: ChartAxisSettings(
+                          x: ChartAxisSettingsAxis(
+                            frequency: 1.0,
+                            max: dataPoints.length.toDouble(),
+                            min: 1.0,
+                            textStyle:
+                                TextStyle(color: Colors.black, fontSize: 12.0),
+                          ),
+                          y: ChartAxisSettingsAxis(
+                            frequency: 10.0,
+                            max: 100.0,
+                            min: 0.0,
+                            textStyle:
+                                TextStyle(color: Colors.black, fontSize: 12.0),
+                          ),
+                        ),
+                        labelX: (value) => dateLabels[value.toInt() - 1],
+                        labelY: (value) => value.toString(),
+                      ),
+                      ChartLineLayer(
+                        items: dataPoints,
+                        settings: ChartLineSettings(
+                          color: Colors.blue,
+                          thickness: 2.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Scroll for more data',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              )
+            ],
+          );
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<DateTime> completedSessionDates = _getCompletedSessionDates();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -124,6 +213,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 onFormatChanged: (format) {},
                 onPageChanged: (focusedDay) => _focusedDay = focusedDay,
                 locale: 'en_US',
+                calendarBuilders: CalendarBuilders(
+                  defaultBuilder: (context, day, focusedDay) {
+                    if (completedSessionDates.contains(day)) {
+                      return Center(
+                        child: Stack(
+                          children: [
+                            Center(
+                                child: Text('${day.day}',
+                                    style: TextStyle(fontSize: 16))),
+                            Positioned(
+                              right: 4,
+                              bottom: 4,
+                              child: Icon(Icons.check_circle,
+                                  color: Colors.green, size: 16),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return Center(
+                        child:
+                            Text('${day.day}', style: TextStyle(fontSize: 16)));
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -169,8 +282,60 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  // Line chart
-                  _buildLineChart(),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _showLastFiveSessions = true;
+                          });
+                        },
+                        child: const Text('Last 5 Sessions'),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _showLastFiveSessions = false;
+                          });
+                        },
+                        child: const Text('All Time Progress'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        _buildLineChart(),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Container(
+                              height: 20,
+                              width: _sessions.length * 100.0,
+                              child: Scrollbar(
+                                thumbVisibility: true,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: List.generate(
+                                    _sessions.length,
+                                    (index) => Container(
+                                      width: 100.0,
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -202,64 +367,5 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildLineChart() {
-    List<ChartLineDataItem> dataPoints = _sessions
-        .asMap()
-        .entries
-        .map((entry) => ChartLineDataItem(
-              x: entry.key.toDouble() + 1,
-              value: entry.value['withinLimitPercentage'].toDouble(),
-            ))
-        .toList();
-
-    List<String> dateLabels = _sessions
-        .map((session) => DateFormat('yyyy-MM-dd')
-            .format(DateTime.parse(session['date'] as String)))
-        .toList();
-
-    return _sessions.isEmpty
-        ? Container(
-            height: 200,
-            child: Center(
-              child: Text(
-                'No session data available',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          )
-        : Container(
-            height: 200,
-            child: Chart(
-              layers: [
-                ChartAxisLayer(
-                  settings: ChartAxisSettings(
-                    x: ChartAxisSettingsAxis(
-                      frequency: 1.0,
-                      max: _sessions.length.toDouble(),
-                      min: 1.0,
-                      textStyle: TextStyle(color: Colors.black, fontSize: 12.0),
-                    ),
-                    y: ChartAxisSettingsAxis(
-                      frequency: 10.0,
-                      max: 100.0,
-                      min: 0.0,
-                      textStyle: TextStyle(color: Colors.black, fontSize: 12.0),
-                    ),
-                  ),
-                  labelX: (value) => dateLabels[value.toInt() - 1],
-                  labelY: (value) => value.toString(),
-                ),
-                ChartLineLayer(
-                  items: dataPoints,
-                  settings: ChartLineSettings(
-                    color: Colors.blue,
-                    thickness: 2.0,
-                  ),
-                ),
-              ],
-            ),
-          );
   }
 }
