@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:licenta_app/pages/home_screen.dart';
-import '../pages/save_code.dart';
 import '../pages/signin_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Initialize Firebase
+  await Firebase.initializeApp(); // Initializarea Firebase
   runApp(const MyApp());
 }
 
@@ -21,7 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const SplashScreen(), // Set SplashScreen as the initial route
+      home: const SplashScreen(), // Splanscreen pana se incarca aplicatia
     );
   }
 }
@@ -41,19 +40,19 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkUserStatus() async {
-    // Wait for a moment to simulate splash screen delay
+    // Simulare SplasScreen dupa 2 secunde
     await Future.delayed(const Duration(seconds: 2));
 
-    // Check if a user is signed in
+    // Verificare daca userul este logat
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // Navigate to HomeScreen if user is signed in
+      // Daca userul este logat, aplicatia navigheaza (se deschide) in HomeScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else {
-      // Navigate to SigninScreen if no user is signed in
+      // Daca userul NU este logat, aplicatia navigheaza (se deschide) in SigninScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const SigninScreen()),
@@ -65,7 +64,8 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-        child: CircularProgressIndicator(), // Show a loading indicator
+        child:
+            CircularProgressIndicator(), // Cerc ce indica faptul ca aplicatia se incarca (in SplashScreen)
       ),
     );
   }
