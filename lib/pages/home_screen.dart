@@ -28,13 +28,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    super.initState();
-    user = FirebaseAuth.instance.currentUser;
+    super
+        .initState(); //we call the super.initState() method to ensure that the parent class's initState() method is called first
+    user = FirebaseAuth
+        .instance.currentUser; //Variabila user retine userul curent logat
     _fetchSessionData();
   }
 
+//Metoda pentru a prelua datele sesiunilor din Cloud Firestore
   Future<void> _fetchSessionData() async {
     if (user != null) {
+      //Verificam daca userul este logat
       final snapshot = await FirebaseFirestore.instance
           .collection('user_data')
           .doc(user!.uid)
@@ -48,12 +52,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+//Metoda pentru a prelua data la care a fost salvata sesiunea
   List<DateTime> _getCompletedSessionDates() {
     return _sessions
         .map((session) => DateTime.parse(session['date'] as String))
         .toList();
   }
 
+//Metoda pentru a crea un grafic cu liniile de progres
   Widget _buildLineChart() {
     List<Map<String, dynamic>> sessionsToShow = _showLastFiveSessions
         ? _sessions
@@ -159,6 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(
                       builder: (context) => const SettingsScreen()),
                 );
+                // Optiune de logout
               } else if (value == 'Logout') {
                 FirebaseAuth.instance.signOut().then((_) {
                   Navigator.pushAndRemoveUntil(

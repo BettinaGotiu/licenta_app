@@ -21,6 +21,7 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
     _loadPrompts();
   }
 
+// Load prompts from assets
   void _loadPrompts() async {
     final domains = [
       'art',
@@ -47,6 +48,7 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
     }
   }
 
+// Get a random prompt
   void _getRandomPrompt() {
     if (prompts.isEmpty) return;
     final random = Random();
@@ -55,8 +57,9 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
     });
   }
 
+// Refresh the prompt
   void _refreshPrompt() {
-    if (refreshCount > 0) {
+    if (refreshCount > 1) {
       _getRandomPrompt();
       setState(() {
         refreshCount--;

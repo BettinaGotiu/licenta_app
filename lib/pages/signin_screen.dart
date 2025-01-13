@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../reusable_widgets/reusable_widget.dart';
-import 'speech_to_text.dart'; // Importă pagina SpeechToTextPage
 import '../utils/color_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'signup_screen.dart';
@@ -21,7 +20,7 @@ class _SigninScreenState extends State<SigninScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        width: MediaQuery.of(context).size.width,
+        width: MediaQuery.of(context).size.width, // Full screen width
         height: MediaQuery.of(context).size.height, // Full screen height
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -109,6 +108,7 @@ class _SigninScreenState extends State<SigninScreen> {
     );
   }
 
+//Posibilitatea de a naviga din SignIn la SignUp in cazul in care userul nu are cont
   Row signUpOption() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
