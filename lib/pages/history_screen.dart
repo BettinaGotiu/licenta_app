@@ -113,15 +113,37 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('History'),
+        automaticallyImplyLeading: false, // Remove the back button
         actions: [
           if (_isEditMode)
-            TextButton(
-              onPressed: _toggleEditMode,
-              child: const Text('Done', style: TextStyle(color: Colors.white)),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton.icon(
+                onPressed: _toggleEditMode,
+                icon: const Icon(Icons.check, color: Colors.white),
+                label:
+                    const Text("Done", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
             ),
-          IconButton(
-            icon: Icon(_isEditMode ? Icons.close : Icons.edit),
-            onPressed: _toggleEditMode,
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton.icon(
+              onPressed: _toggleEditMode,
+              icon: const Icon(Icons.edit, color: Colors.white),
+              label: const Text("Edit", style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -174,12 +196,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     sessionDate: _sessions[index]['date'],
                                   ),
                                   if (_isEditMode)
-                                    Positioned.fill(
-                                      child: Align(
-                                        alignment: Alignment.center,
+                                    Container(
+                                      width: 90.0,
+                                      height: 90.0,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                      child: Center(
                                         child: IconButton(
-                                          icon: Icon(Icons.delete),
-                                          color: Colors.red.withOpacity(0.5),
+                                          icon: const Icon(Icons.delete),
+                                          color: Colors.red,
                                           onPressed: () {
                                             _confirmDeleteSession(
                                                 _sessions[index]['id']);
