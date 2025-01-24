@@ -58,8 +58,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         _sessions.length,
                         (index) {
                           final isEven = index % 2 == 0;
-                          final randomOffset = Random().nextDouble() * 100 -
-                              50; // Random offset for position
+                          final randomOffset = Random().nextDouble() * 40 -
+                              20; // Reduced random offset
                           final positionLeft = isEven
                               ? MediaQuery.of(context).size.width / 2 -
                                   120 +
@@ -69,8 +69,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   randomOffset;
                           return Positioned(
                             top: index * 250.0,
-                            left: positionLeft.clamp(50.0,
-                                MediaQuery.of(context).size.width - 150.0),
+                            left: positionLeft.clamp(
+                                16.0,
+                                MediaQuery.of(context).size.width -
+                                    166.0), // Account for padding
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.push(
