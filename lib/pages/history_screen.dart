@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
+import 'home_screen.dart';
+import 'settings_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -13,6 +15,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   late User? user;
   List<Map<String, dynamic>> _sessions = [];
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -38,6 +41,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+
+    if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HistoryScreen()),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,8 +82,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         _sessions.length,
                         (index) {
                           final isEven = index % 2 == 0;
-                          final randomOffset = Random().nextDouble() * 40 -
-                              20; // Reduced random offset
+                          final randomOffset = Random().nextDouble() * 40 - 20;
                           final positionLeft = isEven
                               ? MediaQuery.of(context).size.width / 2 -
                                   120 +
@@ -96,6 +119,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                 ),
               ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'User',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.amber[800],
+        onTap: _onItemTapped,
       ),
     );
   }

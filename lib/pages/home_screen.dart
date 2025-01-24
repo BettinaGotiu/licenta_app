@@ -137,19 +137,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == _selectedIndex) return;
 
-    if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SettingsScreen()),
-      );
+    if (index == 0) {
+      setState(() {
+        _selectedIndex = index;
+      });
     } else if (index == 1) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const HistoryScreen()),
+      );
+    } else if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SettingsScreen()),
       );
     }
   }
