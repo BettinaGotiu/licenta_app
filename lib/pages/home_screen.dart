@@ -11,6 +11,7 @@ import 'settings_screen.dart';
 import 'domain_selection_screen.dart';
 import 'daily_challenge_screen.dart';
 import 'personalized_words_page.dart';
+import 'history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -146,7 +147,10 @@ class _HomeScreenState extends State<HomeScreen> {
         MaterialPageRoute(builder: (context) => const SettingsScreen()),
       );
     } else if (index == 1) {
-      // Handle history navigation here if needed
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const HistoryScreen()),
+      );
     }
   }
 
