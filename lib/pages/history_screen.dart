@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -41,45 +42,147 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('History'),
+        title: const Text('History'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _sessions.isEmpty
-            ? Center(child: CircularProgressIndicator())
-            : ListView.builder(
-                itemCount: _sessions.length,
-                itemBuilder: (context, index) {
-                  final session = _sessions[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 10),
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15)),
-                    child: ListTile(
-                      title: Text(
-                        'Session ${index + 1}',
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text('Date: ${session['date']}'),
-                      trailing: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  SessionDetailScreen(session: session),
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: CustomPaint(
+                  painter: PathPainter(_sessions.length),
+                  child: SizedBox(
+                    height: _sessions.length * 250.0,
+                    child: Stack(
+                      children: List.generate(
+                        _sessions.length,
+                        (index) {
+                          final isEven = index % 2 == 0;
+                          final randomOffset = Random().nextDouble() * 100 -
+                              50; // Random offset for position
+                          final positionLeft = isEven
+                              ? MediaQuery.of(context).size.width / 2 -
+                                  120 +
+                                  randomOffset
+                              : MediaQuery.of(context).size.width / 2 +
+                                  20 +
+                                  randomOffset;
+                          return Positioned(
+                            top: index * 250.0,
+                            left: positionLeft.clamp(50.0,
+                                MediaQuery.of(context).size.width - 150.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SessionDetailScreen(
+                                      session: _sessions[index],
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: SessionNode(
+                                sessionNumber: index + 1,
+                                sessionDate: _sessions[index]['date'],
+                              ),
                             ),
                           );
                         },
-                        child: const Text("Access"),
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
       ),
+    );
+  }
+}
+
+class PathPainter extends CustomPainter {
+  final int sessionCount;
+
+  PathPainter(this.sessionCount);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.orangeAccent
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    double x = size.width / 2;
+    double y = 60;
+
+    path.moveTo(x, y);
+
+    for (int i = 0; i < sessionCount - 1; i++) {
+      final isEven = i % 2 == 0;
+      final controlX = isEven ? x + 100 : x - 100;
+      final nextX = isEven ? x + 120 : x - 120;
+      y += 250;
+      path.quadraticBezierTo(controlX.clamp(50.0, size.width - 50.0), y - 125,
+          nextX.clamp(50.0, size.width - 50.0), y);
+      x = nextX;
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class SessionNode extends StatelessWidget {
+  final int sessionNumber;
+  final String sessionDate;
+
+  const SessionNode({
+    Key? key,
+    required this.sessionNumber,
+    required this.sessionDate,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final sizeOptions = [70.0, 80.0, 90.0];
+    final randomSize = sizeOptions[Random().nextInt(sizeOptions.length)];
+
+    return Column(
+      children: [
+        Container(
+          width: randomSize,
+          height: randomSize,
+          decoration: BoxDecoration(
+            color: Colors.purple,
+            borderRadius: BorderRadius.circular(50),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              'Session\n$sessionNumber',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          sessionDate,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+      ],
     );
   }
 }
@@ -94,7 +197,7 @@ class SessionDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Session Details'),
+        title: const Text('Session Details'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -103,27 +206,27 @@ class SessionDetailScreen extends StatelessWidget {
           children: [
             Text(
               'Date: ${session['date']}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'Average WPM: ${session['averageWpm']}',
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'Within Limit Percentage: ${session['withinLimitPercentage']}',
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'Spoken Text: ${session['spokenText']}',
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'Common Word Counts: ${session['commonWordCounts']}',
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
           ],
         ),
