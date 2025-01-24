@@ -16,6 +16,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   late User? user;
   List<Map<String, dynamic>> _sessions = [];
   int _selectedIndex = 1;
+  bool _isEditMode = false;
 
   @override
   void initState() {
@@ -35,7 +36,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
       setState(() {
         _sessions = snapshot.docs
-            .map((doc) => doc.data() as Map<String, dynamic>)
+            .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
             .toList();
       });
     }
@@ -62,11 +63,67 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  void _toggleEditMode() {
+    setState(() {
+      _isEditMode = !_isEditMode;
+    });
+  }
+
+  Future<void> _deleteSession(String sessionId) async {
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('user_data')
+          .doc(user!.uid)
+          .collection('sessions')
+          .doc(sessionId)
+          .delete();
+
+      _fetchSessionData();
+    }
+  }
+
+  void _confirmDeleteSession(String sessionId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Session"),
+          content: const Text(
+              "Are you sure you want to delete this session? This action cannot be undone."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteSession(sessionId);
+                Navigator.of(context).pop();
+              },
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('History'),
+        actions: [
+          if (_isEditMode)
+            TextButton(
+              onPressed: _toggleEditMode,
+              child: const Text('Done', style: TextStyle(color: Colors.white)),
+            ),
+          IconButton(
+            icon: Icon(_isEditMode ? Icons.close : Icons.edit),
+            onPressed: _toggleEditMode,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -97,19 +154,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 MediaQuery.of(context).size.width -
                                     166.0), // Account for padding
                             child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SessionDetailScreen(
-                                      session: _sessions[index],
-                                    ),
+                              onTap: !_isEditMode
+                                  ? () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              SessionDetailScreen(
+                                            session: _sessions[index],
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                              child: Stack(
+                                children: [
+                                  SessionNode(
+                                    sessionNumber: index + 1,
+                                    sessionDate: _sessions[index]['date'],
                                   ),
-                                );
-                              },
-                              child: SessionNode(
-                                sessionNumber: index + 1,
-                                sessionDate: _sessions[index]['date'],
+                                  if (_isEditMode)
+                                    Positioned.fill(
+                                      child: Align(
+                                        alignment: Alignment.center,
+                                        child: IconButton(
+                                          icon: Icon(Icons.delete),
+                                          color: Colors.red.withOpacity(0.5),
+                                          onPressed: () {
+                                            _confirmDeleteSession(
+                                                _sessions[index]['id']);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           );
