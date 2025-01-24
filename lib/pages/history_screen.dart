@@ -115,30 +115,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
         title: const Text('History'),
         automaticallyImplyLeading: false, // Remove the back button
         actions: [
-          if (_isEditMode)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton.icon(
-                onPressed: _toggleEditMode,
-                icon: const Icon(Icons.check, color: Colors.white),
-                label:
-                    const Text("Done", style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-            ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton.icon(
               onPressed: _toggleEditMode,
-              icon: const Icon(Icons.edit, color: Colors.white),
-              label: const Text("Edit", style: TextStyle(color: Colors.white)),
+              icon: Icon(_isEditMode ? Icons.check : Icons.edit,
+                  color: Colors.white),
+              label: Text(_isEditMode ? "Done" : "Edit",
+                  style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: _isEditMode ? Colors.green : Colors.red,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -169,6 +155,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               : MediaQuery.of(context).size.width / 2 +
                                   20 +
                                   randomOffset;
+                          final sessionSize = 90.0;
                           return Positioned(
                             top: index * 250.0,
                             left: positionLeft.clamp(
@@ -190,15 +177,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     }
                                   : null,
                               child: Stack(
+                                alignment: Alignment.center,
                                 children: [
                                   SessionNode(
                                     sessionNumber: index + 1,
                                     sessionDate: _sessions[index]['date'],
+                                    size: sessionSize,
                                   ),
                                   if (_isEditMode)
                                     Container(
-                                      width: 90.0,
-                                      height: 90.0,
+                                      width: sessionSize,
+                                      height: sessionSize,
                                       decoration: BoxDecoration(
                                         color: Colors.white.withOpacity(0.6),
                                         borderRadius: BorderRadius.circular(50),
@@ -262,7 +251,7 @@ class PathPainter extends CustomPainter {
 
     final path = Path();
     double x = size.width / 2;
-    double y = 60;
+    double y = 100; // Start below the buttons
 
     path.moveTo(x, y);
 
@@ -286,23 +275,22 @@ class PathPainter extends CustomPainter {
 class SessionNode extends StatelessWidget {
   final int sessionNumber;
   final String sessionDate;
+  final double size;
 
   const SessionNode({
     Key? key,
     required this.sessionNumber,
     required this.sessionDate,
+    required this.size,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final sizeOptions = [70.0, 80.0, 90.0];
-    final randomSize = sizeOptions[Random().nextInt(sizeOptions.length)];
-
     return Column(
       children: [
         Container(
-          width: randomSize,
-          height: randomSize,
+          width: size,
+          height: size,
           decoration: BoxDecoration(
             color: Colors.purple,
             borderRadius: BorderRadius.circular(50),
