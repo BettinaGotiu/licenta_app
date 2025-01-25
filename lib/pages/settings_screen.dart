@@ -18,6 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _emailController = TextEditingController();
   late User? user;
   int _selectedIndex = 2;
+  bool _passwordVisible = false;
 
   @override
   void initState() {
@@ -28,17 +29,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // Function to re-authenticate the user
-  Future<void> _reauthenticateUser() async {
+  Future<bool> _reauthenticateUser() async {
     try {
       AuthCredential credential = EmailAuthProvider.credential(
         email: user?.email ?? '',
         password: _passwordController.text,
       );
       await user?.reauthenticateWithCredential(credential);
+      return true;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error re-authenticating user: $e")),
       );
+      return false;
     }
   }
 
@@ -137,62 +140,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Function to update the email
   Future<void> _updateEmail() async {
-    try {
-      await _reauthenticateUser(); // Re-authenticate the user before updating email
-      await user?.updateEmail(_emailController.text.trim());
-      await FirebaseFirestore.instance
-          .collection('user_data')
-          .doc(user?.uid)
-          .update({'email': _emailController.text.trim()});
+    bool reauthenticated = await _reauthenticateUser();
+    if (reauthenticated) {
+      try {
+        await user?.updateEmail(_emailController.text.trim());
+        await FirebaseFirestore.instance
+            .collection('user_data')
+            .doc(user?.uid)
+            .update({'email': _emailController.text.trim()});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Email updated successfully")),
+        );
+        setState(() {
+          // Update the local email immediately
+          user = FirebaseAuth.instance.currentUser;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error updating email: $e")),
+        );
+      }
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email updated successfully")),
-      );
-      setState(() {
-        // Update the local email immediately
-        user = FirebaseAuth.instance.currentUser;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating email: $e")),
+        const SnackBar(content: Text("Incorrect password. Please try again.")),
       );
     }
   }
 
   // Function to show a popup dialog for entering a new email
   void _showEmailDialog() {
+    _passwordController.clear(); // Clear the password field initially
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Edit Email"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Enter New Email"),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Edit Email"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _emailController,
+                    decoration:
+                        const InputDecoration(labelText: "Enter New Email"),
+                  ),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: !_passwordVisible,
+                    decoration: InputDecoration(
+                      labelText: "Enter Password to Confirm",
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                    labelText: "Enter Password to Confirm"),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(), // Close dialog
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _updateEmail();
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text("Confirm"),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(), // Close dialog
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    _updateEmail();
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text("Confirm"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
