@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'common_words.dart';
+import 'home_screen.dart';
+import 'history_screen.dart';
+import 'settings_screen.dart';
 
 class PersonalizedWordsPage extends StatefulWidget {
   const PersonalizedWordsPage({Key? key}) : super(key: key);
@@ -10,6 +13,7 @@ class PersonalizedWordsPage extends StatefulWidget {
 
 class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
   final TextEditingController _wordController = TextEditingController();
+  int _selectedIndex = 2; // Default to "Filler Words" tab
 
   void _addWord(String word) {
     setState(() {
@@ -17,12 +21,39 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
     });
   }
 
+  void _onItemTapped(int index) {
+    if (_selectedIndex == index) {
+      return;
+    }
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HistoryScreen()),
+        );
+        break;
+      case 2:
+        // Already on Filler Words page
+        break;
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SettingsScreen()),
+        );
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Personalized Words'),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -74,6 +105,34 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
           );
         },
         child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, size: 20),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history, size: 20),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.edit_note, size: 20),
+            label: 'Filler Words',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person, size: 20),
+            label: 'User',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.amber[800],
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        unselectedFontSize: 10,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
