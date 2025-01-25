@@ -170,6 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Function to show a popup dialog for entering a new email
   void _showEmailDialog() {
     _passwordController.clear(); // Clear the password field initially
+    _passwordVisible = false; // Reset password visibility to hidden
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -185,6 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     decoration:
                         const InputDecoration(labelText: "Enter New Email"),
                   ),
+                  SizedBox(height: 20), // Add space between fields
                   TextField(
                     controller: _passwordController,
                     obscureText: !_passwordVisible,
