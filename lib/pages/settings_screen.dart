@@ -27,6 +27,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _emailController.text = user?.email ?? '';
   }
 
+  // Function to re-authenticate the user
+  Future<void> _reauthenticateUser() async {
+    try {
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user?.email ?? '',
+        password: _passwordController.text,
+      );
+      await user?.reauthenticateWithCredential(credential);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error re-authenticating user: $e")),
+      );
+    }
+  }
+
   // Function to update the password
   Future<void> _updatePassword() async {
     try {
@@ -123,6 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Function to update the email
   Future<void> _updateEmail() async {
     try {
+      await _reauthenticateUser(); // Re-authenticate the user before updating email
       await user?.updateEmail(_emailController.text.trim());
       await FirebaseFirestore.instance
           .collection('user_data')
@@ -149,9 +165,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Edit Email"),
-          content: TextField(
-            controller: _emailController,
-            decoration: const InputDecoration(labelText: "Enter New Email"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: "Enter New Email"),
+              ),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                    labelText: "Enter Password to Confirm"),
+              ),
+            ],
           ),
           actions: [
             TextButton(
