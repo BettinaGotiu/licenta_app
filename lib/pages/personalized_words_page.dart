@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'common_words.dart';
 import 'home_screen.dart';
 import 'history_screen.dart';
@@ -13,12 +15,42 @@ class PersonalizedWordsPage extends StatefulWidget {
 
 class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
   final TextEditingController _wordController = TextEditingController();
+  final User? user = FirebaseAuth.instance.currentUser;
+  Map<String, int> commonWordCounts = {};
   int _selectedIndex = 2; // Default to "Filler Words" tab
 
-  void _addWord(String word) {
-    setState(() {
-      commonWords.add(word);
-    });
+  @override
+  void initState() {
+    super.initState();
+    _fetchCommonWords();
+  }
+
+  Future<void> _fetchCommonWords() async {
+    if (user != null) {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('user_data')
+          .doc(user!.uid)
+          .get();
+
+      setState(() {
+        commonWordCounts = Map<String, int>.from(snapshot['commonWordCounts']);
+      });
+    }
+  }
+
+  void _addWord(String word) async {
+    if (user != null) {
+      setState(() {
+        commonWordCounts[word] = commonWordCounts[word] ?? 0;
+      });
+
+      await FirebaseFirestore.instance
+          .collection('user_data')
+          .doc(user!.uid)
+          .update({
+        'commonWordCounts': commonWordCounts,
+      });
+    }
   }
 
   void _onItemTapped(int index) {
@@ -54,6 +86,9 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Personalized Words'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -61,7 +96,7 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
             Wrap(
               spacing: 8.0,
               runSpacing: 4.0,
-              children: commonWords.map((word) {
+              children: commonWordCounts.keys.map((word) {
                 return Chip(
                   label: Text(word),
                 );
