@@ -21,10 +21,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   // Initial common words and their counts
   final Map<String, int> initialCommonWords = {
     'actually': 0,
-    'basically': 2,
-    'like': 2,
-    'literally': 2,
-    'you know': 1,
+    'basically': 0,
+    'like': 0,
+    'literally': 0,
+    'you know': 0,
   };
 
   // Metoda pentru a crea un user nou in Firebase Authentication
