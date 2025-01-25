@@ -19,7 +19,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late User? user;
   int _selectedIndex = 2;
   bool _passwordVisible = false;
-  bool _showSuccessBorder = false;
+  Color _borderColor = Colors.transparent;
+  double _borderThickness = 2.0;
 
   @override
   void initState() {
@@ -37,8 +38,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         password: _passwordController.text,
       );
       await user?.reauthenticateWithCredential(credential);
+      setState(() {
+        _borderColor = Colors.green;
+        _borderThickness = 3.0;
+      });
       return true;
     } catch (e) {
+      setState(() {
+        _borderColor = Colors.red;
+        _borderThickness = 3.0;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error re-authenticating user: $e")),
       );
@@ -63,6 +72,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Function to show a popup dialog for entering a new password
   void _showPasswordDialog() {
+    _passwordController.clear();
+    _passwordVisible = false;
+    _borderColor = Colors.transparent;
+    _borderThickness = 2.0;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -103,12 +116,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         // Update the local display name immediately
         user = FirebaseAuth.instance.currentUser;
+        _borderColor = Colors.green;
+        _borderThickness = 3.0;
       });
 
       // Show success and close dialog after a delay
-      setState(() {
-        _showSuccessBorder = true;
-      });
       await Future.delayed(const Duration(seconds: 1));
       Navigator.of(context).pop(); // Close the dialog
     } catch (e) {
@@ -124,7 +136,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         user?.displayName ?? ''; // Reset to original value
     _passwordController.clear(); // Clear the password field initially
     _passwordVisible = false; // Reset password visibility to hidden
-    _showSuccessBorder = false; // Reset success border
+    _borderColor = Colors.transparent; // Reset border color
+    _borderThickness = 2.0; // Reset border thickness
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -168,24 +181,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: const Text("Cancel"),
                 ),
                 ElevatedButton(
-                  onPressed: () => _reauthenticateUser().then((success) {
+                  onPressed: () async {
+                    bool success = await _reauthenticateUser();
                     if (success) {
                       _updateUsername(context, setState);
                     } else {
+                      setState(() {
+                        _borderColor = Colors.red;
+                        _borderThickness = 3.0;
+                      });
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                             content:
                                 Text("Incorrect password. Please try again.")),
                       );
                     }
-                  }),
+                  },
                   child: const Text("Confirm"),
                 ),
               ],
               shape: RoundedRectangleBorder(
                 side: BorderSide(
-                  color: _showSuccessBorder ? Colors.green : Colors.transparent,
-                  width: 2,
+                  color: _borderColor,
+                  width: _borderThickness,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -212,12 +230,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         setState(() {
           // Update the local email immediately
           user = FirebaseAuth.instance.currentUser;
+          _borderColor = Colors.green;
+          _borderThickness = 3.0;
         });
 
         // Show success and close dialog after a delay
-        setState(() {
-          _showSuccessBorder = true;
-        });
         await Future.delayed(const Duration(seconds: 1));
         Navigator.of(context).pop(); // Close the dialog
       } catch (e) {
@@ -226,6 +243,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } else {
+      setState(() {
+        _borderColor = Colors.red;
+        _borderThickness = 3.0;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Incorrect password. Please try again.")),
       );
@@ -237,7 +258,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _emailController.text = user?.email ?? ''; // Reset to original value
     _passwordController.clear(); // Clear the password field initially
     _passwordVisible = false; // Reset password visibility to hidden
-    _showSuccessBorder = false; // Reset success border
+    _borderColor = Colors.transparent; // Reset border color
+    _borderThickness = 2.0; // Reset border thickness
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -287,8 +309,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
               shape: RoundedRectangleBorder(
                 side: BorderSide(
-                  color: _showSuccessBorder ? Colors.green : Colors.transparent,
-                  width: 2,
+                  color: _borderColor,
+                  width: _borderThickness,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
