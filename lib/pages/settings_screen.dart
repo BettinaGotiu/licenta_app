@@ -19,6 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late User? user;
   int _selectedIndex = 2;
   bool _passwordVisible = false;
+  bool _showSuccessBorder = false;
 
   @override
   void initState() {
@@ -88,7 +89,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // Function to update the username
-  Future<void> _updateUsername() async {
+  Future<void> _updateUsername(
+      BuildContext context, StateSetter setState) async {
     try {
       await user?.updateDisplayName(_usernameController.text.trim());
       await FirebaseFirestore.instance
@@ -102,6 +104,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // Update the local display name immediately
         user = FirebaseAuth.instance.currentUser;
       });
+
+      // Show success and close dialog after a delay
+      setState(() {
+        _showSuccessBorder = true;
+      });
+      await Future.delayed(const Duration(seconds: 1));
+      Navigator.of(context).pop(); // Close the dialog
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error updating username: $e")),
@@ -111,35 +120,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Function to show a popup dialog for entering a new username
   void _showUsernameDialog() {
+    _usernameController.text =
+        user?.displayName ?? ''; // Reset to original value
+    _passwordController.clear(); // Clear the password field initially
+    _passwordVisible = false; // Reset password visibility to hidden
+    _showSuccessBorder = false; // Reset success border
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Edit Username"),
-          content: TextField(
-            controller: _usernameController,
-            decoration: const InputDecoration(labelText: "Enter New Username"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(), // Close dialog
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _updateUsername();
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text("Confirm"),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Edit Username"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _usernameController,
+                    decoration:
+                        const InputDecoration(labelText: "Enter New Username"),
+                  ),
+                  SizedBox(height: 20), // Add space between fields
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: !_passwordVisible,
+                    decoration: InputDecoration(
+                      labelText: "Enter Password to Confirm",
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(), // Close dialog
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _reauthenticateUser().then((success) {
+                    if (success) {
+                      _updateUsername(context, setState);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text("Incorrect password. Please try again.")),
+                      );
+                    }
+                  }),
+                  child: const Text("Confirm"),
+                ),
+              ],
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  color: _showSuccessBorder ? Colors.green : Colors.transparent,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            );
+          },
         );
       },
     );
   }
 
   // Function to update the email
-  Future<void> _updateEmail() async {
+  Future<void> _updateEmail(BuildContext context, StateSetter setState) async {
     bool reauthenticated = await _reauthenticateUser();
     if (reauthenticated) {
       try {
@@ -155,6 +213,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Update the local email immediately
           user = FirebaseAuth.instance.currentUser;
         });
+
+        // Show success and close dialog after a delay
+        setState(() {
+          _showSuccessBorder = true;
+        });
+        await Future.delayed(const Duration(seconds: 1));
+        Navigator.of(context).pop(); // Close the dialog
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error updating email: $e")),
@@ -169,8 +234,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Function to show a popup dialog for entering a new email
   void _showEmailDialog() {
+    _emailController.text = user?.email ?? ''; // Reset to original value
     _passwordController.clear(); // Clear the password field initially
     _passwordVisible = false; // Reset password visibility to hidden
+    _showSuccessBorder = false; // Reset success border
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -214,13 +281,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: const Text("Cancel"),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    _updateEmail();
-                    Navigator.of(context).pop(); // Close the dialog
-                  },
+                  onPressed: () => _updateEmail(context, setState),
                   child: const Text("Confirm"),
                 ),
               ],
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  color: _showSuccessBorder ? Colors.green : Colors.transparent,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
             );
           },
         );
