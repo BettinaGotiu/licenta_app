@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart'; // Import the intl package
 import 'dart:math';
 import 'home_screen.dart';
 import 'settings_screen.dart';
@@ -82,14 +83,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  void _confirmDeleteSession(String sessionId) {
+  void _confirmDeleteSession(String sessionId, String sessionDateTime) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Delete Session"),
-          content: const Text(
-              "Are you sure you want to delete this session? This action cannot be undone."),
+          content: Text(
+              "Are you sure you want to delete the session registered at $sessionDateTime? This action cannot be undone."),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -106,6 +107,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         );
       },
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('yyyy-MM-dd HH:mm').format(date);
   }
 
   @override
@@ -156,6 +161,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   20 +
                                   randomOffset;
                           final sessionSize = 90.0;
+                          final sessionDateTime =
+                              DateTime.parse(_sessions[index]['date']);
+                          final formattedDateTime =
+                              _formatDate(sessionDateTime);
                           return Positioned(
                             top: index * 250.0,
                             left: positionLeft.clamp(
@@ -178,11 +187,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   : null,
                               child: SessionNode(
                                 sessionNumber: index + 1,
-                                sessionDate: _sessions[index]['date'],
+                                sessionDate: formattedDateTime,
                                 size: sessionSize,
                                 isEditMode: _isEditMode,
                                 onDelete: () {
-                                  _confirmDeleteSession(_sessions[index]['id']);
+                                  _confirmDeleteSession(_sessions[index]['id'],
+                                      formattedDateTime);
                                 },
                               ),
                             ),
