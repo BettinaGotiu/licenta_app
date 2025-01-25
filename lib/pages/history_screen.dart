@@ -176,34 +176,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                       );
                                     }
                                   : null,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  SessionNode(
-                                    sessionNumber: index + 1,
-                                    sessionDate: _sessions[index]['date'],
-                                    size: sessionSize,
-                                  ),
-                                  if (_isEditMode)
-                                    Container(
-                                      width: sessionSize,
-                                      height: sessionSize,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.6),
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Center(
-                                        child: IconButton(
-                                          icon: const Icon(Icons.delete),
-                                          color: Colors.red,
-                                          onPressed: () {
-                                            _confirmDeleteSession(
-                                                _sessions[index]['id']);
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                              child: SessionNode(
+                                sessionNumber: index + 1,
+                                sessionDate: _sessions[index]['date'],
+                                size: sessionSize,
+                                isEditMode: _isEditMode,
+                                onDelete: () {
+                                  _confirmDeleteSession(_sessions[index]['id']);
+                                },
                               ),
                             ),
                           );
@@ -276,41 +256,50 @@ class SessionNode extends StatelessWidget {
   final int sessionNumber;
   final String sessionDate;
   final double size;
+  final bool isEditMode;
+  final VoidCallback onDelete;
 
   const SessionNode({
     Key? key,
     required this.sessionNumber,
     required this.sessionDate,
     required this.size,
+    required this.isEditMode,
+    required this.onDelete,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: Colors.purple,
-            borderRadius: BorderRadius.circular(50),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              'Session\n$sessionNumber',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+        GestureDetector(
+          onTap: isEditMode ? onDelete : null,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: isEditMode ? Colors.red.withOpacity(0.6) : Colors.purple,
+              borderRadius: BorderRadius.circular(50),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Center(
+              child: isEditMode
+                  ? const Icon(Icons.delete, color: Colors.white)
+                  : Text(
+                      'Session\n$sessionNumber',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
             ),
           ),
         ),
