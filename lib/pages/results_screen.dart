@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'home_screen.dart';
 import 'common_words.dart'; // Import the common_words file
 import 'package:uuid/uuid.dart'; // Import UUID package
+import 'package:intl/intl.dart'; // Import intl package
 
 class ResultsScreen extends StatefulWidget {
   final String spokenText;
@@ -26,16 +26,17 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   late Map<String, int> _commonWordCounts;
   bool _isLoading = true; // For displaying the loading widget
-  double? _lastSessionAverage;
+  double? _lastSessionsAverage;
   List<Map<String, dynamic>> _sessions = [];
-  Map<String, double> _allTimeAverageWordCounts = {};
+  Map<String, double> _averageWordCounts = {};
+  bool _showText = false; // For showing/hiding the text
 
   @override
   void initState() {
     super.initState();
     _commonWordCounts = {};
     _countCommonWords();
-    _fetchPreviousSessionData();
+    _fetchPreviousSessionsData();
   }
 
   void _countCommonWords() {
@@ -56,7 +57,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return regExp.allMatches(text).length;
   }
 
-  Future<void> _fetchPreviousSessionData() async {
+  Future<void> _fetchPreviousSessionsData() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
@@ -66,46 +67,51 @@ class _ResultsScreenState extends State<ResultsScreen> {
           .doc(userId)
           .collection('sessions');
 
-      // Fetch the last session
-      final snapshot =
-          await userCollection.orderBy('date', descending: true).limit(1).get();
+      // Fetch all sessions
+      final snapshot = await userCollection.orderBy('date').get();
 
-      if (snapshot.docs.isNotEmpty) {
-        final lastSession = snapshot.docs.first.data() as Map<String, dynamic>;
-        _lastSessionAverage = lastSession['withinLimitPercentage'] as double?;
-      }
-
-      // Fetch all sessions for the chart
-      final allSessionsSnapshot = await userCollection.orderBy('date').get();
       setState(() {
-        _sessions = allSessionsSnapshot.docs
+        _sessions = snapshot.docs
             .map((doc) => doc.data() as Map<String, dynamic>)
             .toList();
-        _calculateAllTimeAverageWordCounts();
+        _lastSessionsAverage = _sessions.isNotEmpty
+            ? _sessions
+                    .map(
+                        (session) => session['withinLimitPercentage'] as double)
+                    .reduce((a, b) => a + b) /
+                _sessions.length
+            : 0.0;
       });
+
+      // Calculate the average occurrences of each word
+      _calculateAverageWordCounts();
 
       // Save the current session
       await _saveResultsToFirestore(userCollection);
     }
   }
 
-  void _calculateAllTimeAverageWordCounts() {
-    Map<String, List<int>> wordCounts = {};
+  void _calculateAverageWordCounts() {
+    Map<String, int> totalWordCounts = {};
 
+    // Initialize counts to 0
+    commonWords.forEach((expression) {
+      totalWordCounts[expression] = 0;
+    });
+
+    // Sum occurrences of each expression across all sessions
     for (var session in _sessions) {
-      Map<String, int> commonWordCounts =
+      Map<String, int> sessionWordCounts =
           Map<String, int>.from(session['commonWordCounts']);
-      commonWordCounts.forEach((word, count) {
-        wordCounts.putIfAbsent(word, () => []);
-        wordCounts[word]?.add(count);
+      sessionWordCounts.forEach((word, count) {
+        totalWordCounts[word] = (totalWordCounts[word] ?? 0) + count;
       });
     }
 
-    wordCounts.forEach((word, counts) {
-      double averageCount = counts.isNotEmpty
-          ? counts.reduce((a, b) => a + b) / counts.length
-          : 0;
-      _allTimeAverageWordCounts[word] = averageCount;
+    // Calculate the average occurrences
+    int sessionCount = _sessions.length;
+    totalWordCounts.forEach((word, totalCount) {
+      _averageWordCounts[word] = totalCount / sessionCount;
     });
   }
 
@@ -130,11 +136,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   Widget _buildLineChart() {
     // Get the last 5 sessions
-    List<Map<String, dynamic>> lastFiveSessions = _sessions
+    List<Map<String, dynamic>> sessionsToShow = _sessions
         .skip(_sessions.length > 5 ? _sessions.length - 5 : 0)
         .toList();
 
-    List<ChartLineDataItem> dataPoints = lastFiveSessions
+    List<ChartLineDataItem> dataPoints = sessionsToShow
         .asMap()
         .entries
         .map((entry) => ChartLineDataItem(
@@ -143,19 +149,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
             ))
         .toList();
 
-    // Add the new session data point
-    dataPoints.add(ChartLineDataItem(
-      x: dataPoints.length + 1.0,
-      value: widget.withinLimitPercentage,
-    ));
-
-    List<String> dateLabels = lastFiveSessions
+    List<String> dateLabels = sessionsToShow
         .map((session) => DateFormat('yyyy-MM-dd')
             .format(DateTime.parse(session['date'] as String)))
         .toList();
-
-    // Add label for the new session
-    dateLabels.add(DateFormat('yyyy-MM-dd').format(DateTime.now()));
 
     return _sessions.isEmpty
         ? Container(
@@ -208,64 +205,68 @@ class _ResultsScreenState extends State<ResultsScreen> {
           );
   }
 
+  void _showSpokenTextPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Spoken Text"),
+          content: SingleChildScrollView(
+            child: RichText(
+              text: TextSpan(
+                children: _buildHighlightedText(widget.spokenText),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  List<TextSpan> _buildHighlightedText(String text) {
+    List<TextSpan> spans = [];
+    text.split(' ').forEach((word) {
+      if (_commonWordCounts.containsKey(word.toLowerCase()) &&
+          _commonWordCounts[word.toLowerCase()]! > 2) {
+        spans.add(TextSpan(
+            text: '$word ',
+            style: TextStyle(
+                color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)));
+      } else {
+        spans.add(TextSpan(
+            text: '$word ',
+            style: TextStyle(fontSize: 16, color: Colors.black)));
+      }
+    });
+    return spans;
+  }
+
   @override
   Widget build(BuildContext context) {
     String comparisonMessage = '';
-    if (_lastSessionAverage != null) {
-      if (widget.withinLimitPercentage > _lastSessionAverage!) {
+    if (_lastSessionsAverage != null) {
+      double improvement = widget.withinLimitPercentage - _lastSessionsAverage!;
+      if (improvement > 0) {
         comparisonMessage =
-            'Great job! Your within limit percentage has improved compared to your last session.';
-      } else if (widget.withinLimitPercentage < _lastSessionAverage!) {
+            'Great job! Your within limit percentage has improved by ${improvement.toStringAsFixed(2)}% compared to the average of the last sessions.';
+      } else if (improvement < 0) {
         comparisonMessage =
-            'Keep trying! Your within limit percentage is lower than your last session.';
+            'Keep trying! Your within limit percentage is lower by ${improvement.abs().toStringAsFixed(2)}% compared to the average of the last sessions.';
       } else {
         comparisonMessage =
-            'You have maintained the same within limit percentage as your last session.';
+            'You have maintained the same within limit percentage as the average of the last sessions.';
       }
     }
 
-    List<Widget> wordWidgets = _commonWordCounts.entries
-        .where((entry) => entry.value > 2)
-        .map((entry) {
-      double averageCount = _allTimeAverageWordCounts[entry.key] ?? 0;
-      double percentageChange = averageCount > 0
-          ? ((entry.value - averageCount) / averageCount) * 100
-          : 0;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${entry.key}: used ${entry.value} times in your speech.',
-            style: const TextStyle(fontSize: 16),
-          ),
-          if (averageCount > 0)
-            Text(
-              'Compared to the average of ${averageCount.toStringAsFixed(2)} times in previous sessions.',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          Text(
-            'Change: ${(percentageChange > 0 ? '+' : '')}${percentageChange.toStringAsFixed(2)}%',
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Advice: Try to avoid using "${entry.key}" too often in the future.',
-            style: const TextStyle(fontSize: 14, color: Colors.red),
-          ),
-          const SizedBox(height: 10),
-        ],
-      );
-    }).toList();
-
-    if (wordWidgets.isEmpty) {
-      wordWidgets.add(
-        Text(
-          'Congratulations! You did not repeat any common words more than 2 times.',
-          style: TextStyle(
-              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
-        ),
-      );
-    }
+    bool hasCommonWords = _commonWordCounts.values.any((count) => count >= 2);
 
     return Scaffold(
       appBar: AppBar(
@@ -322,7 +323,34 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
-                          ...wordWidgets,
+                          if (hasCommonWords)
+                            ..._commonWordCounts.entries
+                                .where((entry) => entry.value >= 2)
+                                .map((entry) {
+                              double averageCount =
+                                  _averageWordCounts[entry.key] ?? 0.0;
+                              double percentageDifference =
+                                  ((entry.value - averageCount) /
+                                          averageCount) *
+                                      100;
+                              return Text(
+                                '${entry.key}: ${entry.value} times (current session is ${percentageDifference.toStringAsFixed(2)}% compared to the average of ${averageCount.toStringAsFixed(2)} occurrences/session)',
+                                style: const TextStyle(fontSize: 16),
+                              );
+                            }).toList()
+                          else
+                            Text(
+                              'Great job! No common words appeared more than twice.',
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: _showSpokenTextPopup,
+                            child: Text("Show Appearances"),
+                          ),
+                          const SizedBox(
+                              height: 20), // Add some space at the bottom
                         ],
                       ),
                     ),

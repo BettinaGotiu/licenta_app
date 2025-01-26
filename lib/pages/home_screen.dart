@@ -11,6 +11,7 @@ import 'settings_screen.dart';
 import 'domain_selection_screen.dart';
 import 'daily_challenge_screen.dart';
 import 'personalized_words_page.dart';
+import 'history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime? _selectedDay;
   List<Map<String, dynamic>> _sessions = [];
   bool _showLastFiveSessions = true;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -134,6 +136,36 @@ class _HomeScreenState extends State<HomeScreen> {
           );
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    switch (index) {
+      case 0:
+        // Home is the current screen
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HistoryScreen()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const PersonalizedWordsPage()),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SettingsScreen()),
+        );
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     List<DateTime> completedSessionDates = _getCompletedSessionDates();
@@ -168,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     (route) => false,
                   );
                 });
-              } else if (value == 'Personalized Words') {
+              } else if (value == 'Filler Words') {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -180,167 +212,157 @@ class _HomeScreenState extends State<HomeScreen> {
               const PopupMenuItem(value: 'Settings', child: Text('Settings')),
               const PopupMenuItem(value: 'Logout', child: Text('Logout')),
               const PopupMenuItem(
-                  value: 'Personalized Words',
-                  child: Text('Personalized Words')),
+                  value: 'Filler Words', child: Text('Filler Words')),
             ],
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const CalendarScreen()),
-                );
-              },
-              child: TableCalendar(
-                firstDay: DateTime.utc(2010, 10, 16),
-                lastDay: DateTime.utc(2030, 3, 14),
-                focusedDay: _focusedDay,
-                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    _selectedDay = selectedDay;
-                    _focusedDay = focusedDay;
-                  });
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const CalendarScreen()),
+                  );
                 },
-                calendarFormat: CalendarFormat.week,
-                onFormatChanged: (format) {},
-                onPageChanged: (focusedDay) => _focusedDay = focusedDay,
-                locale: 'en_US',
-                calendarBuilders: CalendarBuilders(
-                  defaultBuilder: (context, day, focusedDay) {
-                    if (completedSessionDates.contains(day)) {
-                      return Center(
-                        child: Stack(
-                          children: [
-                            Center(
-                                child: Text('${day.day}',
-                                    style: TextStyle(fontSize: 16))),
-                            Positioned(
-                              right: 4,
-                              bottom: 4,
-                              child: Icon(Icons.check_circle,
-                                  color: Colors.green, size: 16),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    return Center(
-                        child:
-                            Text('${day.day}', style: TextStyle(fontSize: 16)));
+                child: TableCalendar(
+                  firstDay: DateTime.utc(2010, 10, 16),
+                  lastDay: DateTime.utc(2030, 3, 14),
+                  focusedDay: _focusedDay,
+                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                  onDaySelected: (selectedDay, focusedDay) {
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
                   },
+                  calendarFormat: CalendarFormat.week,
+                  onFormatChanged: (format) {},
+                  onPageChanged: (focusedDay) => _focusedDay = focusedDay,
+                  locale: 'en_US',
+                  calendarBuilders: CalendarBuilders(
+                    defaultBuilder: (context, day, focusedDay) {
+                      if (completedSessionDates.contains(day)) {
+                        return Center(
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Text('${day.day}',
+                                    style: TextStyle(fontSize: 16)),
+                              ),
+                              Positioned(
+                                right: 4,
+                                bottom: 4,
+                                child: Icon(Icons.check_circle,
+                                    color: Colors.green, size: 16),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return Center(
+                          child: Text('${day.day}',
+                              style: TextStyle(fontSize: 16)));
+                    },
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView(
+              const SizedBox(height: 20),
+              buildCard(
+                title: "Real-Time Sessions",
+                description: "Engage in live sessions with our tool.",
+                context: context,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SpeechToTextPage()),
+                  );
+                },
+              ),
+              buildCard(
+                title: "Practice Exercises",
+                description: "Enhance your skills with practice tasks.",
+                context: context,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => DomainSelectionPage()),
+                  );
+                },
+              ),
+              buildCard(
+                title: "Daily Challenge",
+                description: "Try a new challenge every day.",
+                context: context,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const DailyChallengePage()),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              Row(
                 children: [
-                  buildCard(
-                    title: "Real-Time Sessions",
-                    description: "Engage in live sessions with our tool.",
-                    context: context,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SpeechToTextPage(),
-                        ),
-                      );
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _showLastFiveSessions = true;
+                      });
                     },
+                    child: const Text('Last 5 Sessions'),
                   ),
-                  buildCard(
-                    title: "Practice Exercises",
-                    description: "Enhance your skills with practice tasks.",
-                    context: context,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => DomainSelectionPage()),
-                      );
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _showLastFiveSessions = false;
+                      });
                     },
-                  ),
-                  buildCard(
-                    title: "Daily Challenge",
-                    description: "Try a new challenge every day.",
-                    context: context,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DailyChallengePage(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _showLastFiveSessions = true;
-                          });
-                        },
-                        child: const Text('Last 5 Sessions'),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _showLastFiveSessions = false;
-                          });
-                        },
-                        child: const Text('All Time Progress'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        _buildLineChart(),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Container(
-                              height: 20,
-                              width: _sessions.length * 100.0,
-                              child: Scrollbar(
-                                thumbVisibility: true,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: List.generate(
-                                    _sessions.length,
-                                    (index) => Container(
-                                      width: 100.0,
-                                      color: Colors.transparent,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: const Text('All Time Progress'),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              _buildLineChart(),
+            ],
+          ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, size: 20),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history, size: 20),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.edit_note, size: 20),
+            label: 'Filler Words',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person, size: 20),
+            label: 'User',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.amber[800],
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        unselectedFontSize: 10,
       ),
     );
   }

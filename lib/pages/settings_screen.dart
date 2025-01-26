@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'signin_screen.dart';
+import 'home_screen.dart';
+import 'history_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -11,12 +14,45 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   late User? user;
+  int _selectedIndex = 2;
+  bool _passwordVisible = false;
+  Color _borderColor = Colors.transparent;
+  double _borderThickness = 2.0;
 
   @override
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
+    _usernameController.text = user?.displayName ?? '';
+    _emailController.text = user?.email ?? '';
+  }
+
+  // Function to re-authenticate the user
+  Future<bool> _reauthenticateUser() async {
+    try {
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user?.email ?? '',
+        password: _passwordController.text,
+      );
+      await user?.reauthenticateWithCredential(credential);
+      setState(() {
+        _borderColor = Colors.green;
+        _borderThickness = 3.0;
+      });
+      return true;
+    } catch (e) {
+      setState(() {
+        _borderColor = Colors.red;
+        _borderThickness = 3.0;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error re-authenticating user: $e")),
+      );
+      return false;
+    }
   }
 
   // Function to update the password
@@ -36,6 +72,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Function to show a popup dialog for entering a new password
   void _showPasswordDialog() {
+    _passwordController.clear();
+    _passwordVisible = false;
+    _borderColor = Colors.transparent;
+    _borderThickness = 2.0;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -56,6 +96,226 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: const Text("Confirm"),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  // Function to update the username
+  Future<void> _updateUsername(
+      BuildContext context, StateSetter setState) async {
+    try {
+      await user?.updateDisplayName(_usernameController.text.trim());
+      await FirebaseFirestore.instance
+          .collection('user_data')
+          .doc(user?.uid)
+          .update({'username': _usernameController.text.trim()});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Username updated successfully")),
+      );
+      setState(() {
+        // Update the local display name immediately
+        user = FirebaseAuth.instance.currentUser;
+        _borderColor = Colors.green;
+        _borderThickness = 3.0;
+      });
+
+      // Show success and close dialog after a delay
+      await Future.delayed(const Duration(seconds: 1));
+      Navigator.of(context).pop(); // Close the dialog
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error updating username: $e")),
+      );
+    }
+  }
+
+  // Function to show a popup dialog for entering a new username
+  void _showUsernameDialog() {
+    _usernameController.text =
+        user?.displayName ?? ''; // Reset to original value
+    _passwordController.clear(); // Clear the password field initially
+    _passwordVisible = false; // Reset password visibility to hidden
+    _borderColor = Colors.transparent; // Reset border color
+    _borderThickness = 2.0; // Reset border thickness
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Edit Username"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _usernameController,
+                    decoration:
+                        const InputDecoration(labelText: "Enter New Username"),
+                  ),
+                  SizedBox(height: 20), // Add space between fields
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: !_passwordVisible,
+                    decoration: InputDecoration(
+                      labelText: "Enter Password to Confirm",
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(), // Close dialog
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    bool success = await _reauthenticateUser();
+                    if (success) {
+                      _updateUsername(context, setState);
+                    } else {
+                      setState(() {
+                        _borderColor = Colors.red;
+                        _borderThickness = 3.0;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text("Incorrect password. Please try again.")),
+                      );
+                    }
+                  },
+                  child: const Text("Confirm"),
+                ),
+              ],
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  color: _borderColor,
+                  width: _borderThickness,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Function to update the email
+  Future<void> _updateEmail(BuildContext context, StateSetter setState) async {
+    bool reauthenticated = await _reauthenticateUser();
+    if (reauthenticated) {
+      try {
+        await user?.updateEmail(_emailController.text.trim());
+        await FirebaseFirestore.instance
+            .collection('user_data')
+            .doc(user?.uid)
+            .update({'email': _emailController.text.trim()});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Email updated successfully")),
+        );
+        setState(() {
+          // Update the local email immediately
+          user = FirebaseAuth.instance.currentUser;
+          _borderColor = Colors.green;
+          _borderThickness = 3.0;
+        });
+
+        // Show success and close dialog after a delay
+        await Future.delayed(const Duration(seconds: 1));
+        Navigator.of(context).pop(); // Close the dialog
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error updating email: $e")),
+        );
+      }
+    } else {
+      setState(() {
+        _borderColor = Colors.red;
+        _borderThickness = 3.0;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Incorrect password. Please try again.")),
+      );
+    }
+  }
+
+  // Function to show a popup dialog for entering a new email
+  void _showEmailDialog() {
+    _emailController.text = user?.email ?? ''; // Reset to original value
+    _passwordController.clear(); // Clear the password field initially
+    _passwordVisible = false; // Reset password visibility to hidden
+    _borderColor = Colors.transparent; // Reset border color
+    _borderThickness = 2.0; // Reset border thickness
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Edit Email"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _emailController,
+                    decoration:
+                        const InputDecoration(labelText: "Enter New Email"),
+                  ),
+                  SizedBox(height: 20), // Add space between fields
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: !_passwordVisible,
+                    decoration: InputDecoration(
+                      labelText: "Enter Password to Confirm",
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(), // Close dialog
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _updateEmail(context, setState),
+                  child: const Text("Confirm"),
+                ),
+              ],
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  color: _borderColor,
+                  width: _borderThickness,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            );
+          },
         );
       },
     );
@@ -113,6 +373,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  // Function to log out the user
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const SigninScreen()),
+      (route) => false,
+    );
+  }
+
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+
+    if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HistoryScreen()),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,15 +426,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Icon(Icons.person, size: 50, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            // Display email of the current user
-            Text(
-              "Email: ${user?.email ?? 'Unknown'}",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    "Username: ${user?.displayName ?? 'Unknown'}",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: _showUsernameDialog,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    "Email: ${user?.email ?? 'Unknown'}",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: _showEmailDialog,
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _showPasswordDialog, // Show dialog for password update
               child: const Text("Update Password"),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _logout, // Logout the user
+              child: const Text("Logout"),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -153,6 +477,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'User',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.amber[800],
+        onTap: _onItemTapped,
       ),
     );
   }
