@@ -6,7 +6,7 @@ import '../pages/signin_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Initializarea Firebase
+  await Firebase.initializeApp(); // Initialize Firebase
   runApp(const MyApp());
 }
 
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const SplashScreen(), // Splanscreen pana se incarca aplicatia
+      home: const SplashScreen(), // SplashScreen until the app loads
     );
   }
 }
@@ -40,19 +40,19 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkUserStatus() async {
-    // Simulare SplasScreen dupa 2 secunde
+    // Simulate SplashScreen for 2 seconds
     await Future.delayed(const Duration(seconds: 2));
 
-    // Verificare daca userul este logat
+    // Check if the user is logged in
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // Daca userul este logat, aplicatia navigheaza (se deschide) in HomeScreen
+      // If the user is logged in, navigate to HomeScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else {
-      // Daca userul NU este logat, aplicatia navigheaza (se deschide) in SigninScreen
+      // If the user is NOT logged in, navigate to SigninScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const SigninScreen()),
@@ -65,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return const Scaffold(
       body: Center(
         child:
-            CircularProgressIndicator(), // Cerc ce indica faptul ca aplicatia se incarca (in SplashScreen)
+            CircularProgressIndicator(), // Circular indicator for loading in SplashScreen
       ),
     );
   }
