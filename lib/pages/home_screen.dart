@@ -23,7 +23,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late User? user;
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
   List<Map<String, dynamic>> _sessions = [];
   Set<DateTime> _sessionDates = {}; // Using Set for quick lookup
   bool _showLastFiveSessions = true;
@@ -224,75 +223,88 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const CalendarScreen()),
-                  );
-                },
-                child: TableCalendar(
-                  firstDay: DateTime.utc(2010, 10, 16),
-                  lastDay: DateTime.utc(2030, 3, 14),
-                  focusedDay: _focusedDay,
-                  calendarFormat: CalendarFormat.week,
-                  onFormatChanged: (format) {},
-                  onPageChanged: (focusedDay) => _focusedDay = focusedDay,
-                  locale: 'en_US',
-                  calendarBuilders: CalendarBuilders(
-                    defaultBuilder: (context, day, _) {
-                      if (_isSessionDate(day)) {
-                        return Container(
-                          margin: const EdgeInsets.all(6.0),
-                          decoration: BoxDecoration(
-                            color: Colors.green, // Green for session days
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${day.day}',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        );
-                      }
-                      return Center(
-                        child: Text(
-                          '${day.day}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      );
-                    },
-                    todayBuilder: (context, day, _) {
-                      if (_isSessionDate(day)) {
-                        return Container(
-                          margin: const EdgeInsets.all(6.0),
-                          decoration: BoxDecoration(
-                            color:
-                                Colors.green, // Green if session exists today
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${day.day}',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        );
-                      }
-                      return Center(
-                        child: Text(
-                          '${day.day}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Daily Streak',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.calendar_today, color: Colors.blue),
+                    label: const Text(
+                      'Full Streak Calendar',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CalendarScreen()),
                       );
                     },
                   ),
+                ],
+              ),
+              TableCalendar(
+                firstDay: DateTime.utc(2010, 10, 16),
+                lastDay: DateTime.utc(2030, 3, 14),
+                focusedDay: _focusedDay,
+                calendarFormat: CalendarFormat.week,
+                onFormatChanged: (format) {},
+                onPageChanged: (focusedDay) => _focusedDay = focusedDay,
+                locale: 'en_US',
+                calendarBuilders: CalendarBuilders(
+                  defaultBuilder: (context, day, _) {
+                    if (_isSessionDate(day)) {
+                      return Container(
+                        margin: const EdgeInsets.all(6.0),
+                        decoration: BoxDecoration(
+                          color: Colors.green, // Green for session days
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${day.day}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      );
+                    }
+                    return Center(
+                      child: Text(
+                        '${day.day}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    );
+                  },
+                  todayBuilder: (context, day, _) {
+                    if (_isSessionDate(day)) {
+                      return Container(
+                        margin: const EdgeInsets.all(6.0),
+                        decoration: BoxDecoration(
+                          color: Colors.green, // Green if session exists today
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${day.day}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      );
+                    }
+                    return Center(
+                      child: Text(
+                        '${day.day}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 20),
