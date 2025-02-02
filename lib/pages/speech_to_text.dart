@@ -3,27 +3,11 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:async';
 import 'results_screen.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Speech to Text Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const SpeechToTextPage(),
-    );
-  }
-}
-
 class SpeechToTextPage extends StatefulWidget {
-  const SpeechToTextPage({Key? key}) : super(key: key);
+  final String selectedPace;
+
+  const SpeechToTextPage({Key? key, required this.selectedPace})
+      : super(key: key);
 
   @override
   _SpeechToTextPageState createState() => _SpeechToTextPageState();
@@ -51,9 +35,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
   final ScrollController _scrollController = ScrollController();
 
-  String? _selectedPace;
   String _warningMessage = '';
-  bool _paceSelected = false;
   final int _intervalDuration = 6;
   int _listeningSessionCounter = 0;
 
@@ -73,18 +55,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   }
 
   void _startListening() async {
-    if (_selectedPace == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select a pace before starting."),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
     setState(() {
-      _paceSelected = true;
       _listeningSessionCounter++;
       if (_listeningSessionCounter == 1) {
         _elapsedStopwatch.start();
@@ -129,7 +100,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
           _wpmHistory.add(_currentWpm);
 
           int lowerLimit, upperLimit;
-          switch (_selectedPace) {
+          switch (widget.selectedPace) {
             case "100-130":
               lowerLimit = 100;
               upperLimit = 130;
@@ -188,7 +159,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
           _wpmHistory.add(_currentWpm);
 
           int lowerLimit, upperLimit;
-          switch (_selectedPace) {
+          switch (widget.selectedPace) {
             case "100-130":
               lowerLimit = 100;
               upperLimit = 130;
@@ -282,8 +253,6 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       _currentText = "";
       _currentWpm = 0.0;
       _warningMessage = '';
-      _paceSelected = false;
-      _selectedPace = null;
       _withinLimitCount = 0;
       _listeningSessionCounter = 0;
       _elapsedStopwatch.reset();
@@ -314,7 +283,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     }
 
     int lowerLimit, upperLimit;
-    switch (_selectedPace) {
+    switch (widget.selectedPace) {
       case "100-130":
         lowerLimit = 100;
         upperLimit = 130;
@@ -362,60 +331,11 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: _paceSelected
-                      ? null
-                      : () {
-                          setState(() {
-                            _selectedPace = "100-130";
-                          });
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _paceSelected ? Colors.grey : Colors.blue,
-                  ),
-                  child: const Text("100-130"),
-                ),
-                ElevatedButton(
-                  onPressed: _paceSelected
-                      ? null
-                      : () {
-                          setState(() {
-                            _selectedPace = "130-160";
-                          });
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _paceSelected ? Colors.grey : Colors.green,
-                  ),
-                  child: const Text("130-160"),
-                ),
-                ElevatedButton(
-                  onPressed: _paceSelected
-                      ? null
-                      : () {
-                          setState(() {
-                            _selectedPace = "160-210";
-                          });
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _paceSelected ? Colors.grey : Colors.red,
-                  ),
-                  child: const Text("160-210"),
-                ),
-              ],
+            child: Text(
+              "Selected Pace: ${widget.selectedPace} WPM",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
-          if (_selectedPace != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Selected Pace: $_selectedPace WPM",
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

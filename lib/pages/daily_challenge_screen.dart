@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'speech_to_text.dart';
+import 'speed_selection.dart';
 
 class DailyChallengePage extends StatefulWidget {
   const DailyChallengePage({Key? key}) : super(key: key);
@@ -108,6 +108,16 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
     });
   }
 
+  void _navigateToSpeedSelection(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            const SpeedSelectionPage(nextPageRoute: '/speech_to_text'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,8 +154,8 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    width: 190,
-                    height: 254,
+                    width: 250,
+                    height: 350,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border.all(color: Colors.black, width: 3),
@@ -158,12 +168,16 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
                       ],
                     ),
                     padding: const EdgeInsets.all(16),
-                    child: Center(
-                      child: Text(
-                        prompts[currentPromptIndex],
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w500),
+                    child: SingleChildScrollView(
+                      child: Center(
+                        child: Text(
+                          prompts[currentPromptIndex],
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -186,14 +200,7 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SpeechToTextPage(),
-                  ),
-                );
-              },
+              onPressed: () => _navigateToSpeedSelection(context),
               icon: const Icon(Icons.check),
               label: const Text('Start Challenge'),
               style: ElevatedButton.styleFrom(

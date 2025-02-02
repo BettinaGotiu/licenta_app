@@ -5,13 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'signin_screen.dart';
-import 'speech_to_text.dart';
 import 'calendar_screen.dart';
 import 'settings_screen.dart';
 import 'domain_selection_screen.dart';
 import 'daily_challenge_screen.dart';
 import 'personalized_words_page.dart';
 import 'history_screen.dart';
+import 'speed_selection.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -169,6 +169,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _navigateToSpeedSelection(BuildContext context, String nextPageRoute) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SpeedSelectionPage(nextPageRoute: nextPageRoute),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -313,11 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 description: "Engage in live sessions with our tool.",
                 context: context,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SpeechToTextPage()),
-                  );
+                  _navigateToSpeedSelection(context, '/speech_to_text');
                 },
               ),
               buildCard(
