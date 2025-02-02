@@ -22,17 +22,33 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late User? user;
+  String? username;
   DateTime _focusedDay = DateTime.now();
   List<Map<String, dynamic>> _sessions = [];
   Set<DateTime> _sessionDates = {}; // Using Set for quick lookup
   bool _showLastFiveSessions = true;
   int _selectedIndex = 0;
 
+  final List<Color> _colors = [
+    Color(0xFFDEECDA),
+    Color(0xFFF1E4A0),
+    Color(0xFFF2BC9C),
+    Color(0xFFEDA89D),
+    Color(0xFFE47F5A),
+    Color(0xFFCCE2DC),
+    Color(0xFFCDC8D3),
+    Color(0xFFE3AEAE),
+    Color(0xFFAFCADC),
+    Color(0xFFF8D6D9),
+    Color(0xFF2AB5B7),
+  ];
+
   @override
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
     _fetchSessionData();
+    _fetchUsername();
   }
 
   Future<void> _fetchSessionData() async {
@@ -55,8 +71,30 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _fetchUsername() async {
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('user_data')
+          .doc(user!.uid)
+          .get();
+
+      setState(() {
+        username = doc['username'];
+      });
+    }
+  }
+
   bool _isSessionDate(DateTime date) {
     return _sessionDates.contains(DateTime(date.year, date.month, date.day));
+  }
+
+  void _navigateToSpeedSelection(BuildContext context, String nextPageRoute) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SpeedSelectionPage(nextPageRoute: nextPageRoute),
+      ),
+    );
   }
 
   Widget _buildLineChart() {
@@ -90,93 +128,107 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           )
-        : Column(
-            children: [
-              const Text(
-                'Your Progress Over Time',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'This chart shows how well your speech fits within the selected speed limits over time. Higher percentages indicate better alignment with the speed limit.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          _showLastFiveSessions ? Colors.blue[100] : null,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showLastFiveSessions = true;
-                      });
-                    },
-                    child: const Text('Last 5 Sessions'),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          !_showLastFiveSessions ? Colors.blue[100] : null,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showLastFiveSessions = false;
-                      });
-                    },
-                    child: const Text('All Time Progress'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Container(
-                  width: dataPoints.length * 100.0,
-                  height: 200,
-                  child: Chart(
-                    layers: [
-                      ChartAxisLayer(
-                        settings: ChartAxisSettings(
-                          x: ChartAxisSettingsAxis(
-                            frequency: 1.0,
-                            max: dataPoints.length.toDouble(),
-                            min: 1.0,
-                            textStyle:
-                                TextStyle(color: Colors.black, fontSize: 12.0),
-                          ),
-                          y: ChartAxisSettingsAxis(
-                            frequency: 10.0,
-                            max: 100.0,
-                            min: 0.0,
-                            textStyle:
-                                TextStyle(color: Colors.black, fontSize: 12.0),
-                          ),
-                        ),
-                        labelX: (value) => dateLabels[value.toInt() - 1],
-                        labelY: (value) => value.toString(),
+        : Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.orangeAccent),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                const Text(
+                  'Your Progress Over Time',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'This chart shows how well your speech fits within the selected speed limits over time. Higher percentages indicate better alignment with the speed limit.',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            _showLastFiveSessions ? _colors[0] : null,
                       ),
-                      ChartLineLayer(
-                        items: dataPoints,
-                        settings: ChartLineSettings(
-                          color: Colors.blue,
-                          thickness: 2.0,
-                        ),
+                      onPressed: () {
+                        setState(() {
+                          _showLastFiveSessions = true;
+                        });
+                      },
+                      child: const Text('Last 5 Sessions'),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            !_showLastFiveSessions ? _colors[0] : null,
                       ),
-                    ],
+                      onPressed: () {
+                        setState(() {
+                          _showLastFiveSessions = false;
+                        });
+                      },
+                      child: const Text('All Time Progress'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.orangeAccent),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      width: dataPoints.length * 100.0,
+                      height: 200,
+                      child: Chart(
+                        layers: [
+                          ChartAxisLayer(
+                            settings: ChartAxisSettings(
+                              x: ChartAxisSettingsAxis(
+                                frequency: 1.0,
+                                max: dataPoints.length.toDouble(),
+                                min: 1.0,
+                                textStyle: TextStyle(
+                                    color: Colors.black, fontSize: 12.0),
+                              ),
+                              y: ChartAxisSettingsAxis(
+                                frequency: 10.0,
+                                max: 100.0,
+                                min: 0.0,
+                                textStyle: TextStyle(
+                                    color: Colors.black, fontSize: 12.0),
+                              ),
+                            ),
+                            labelX: (value) => dateLabels[value.toInt() - 1],
+                            labelY: (value) => value.toString(),
+                          ),
+                          ChartLineLayer(
+                            items: dataPoints,
+                            settings: ChartLineSettings(
+                              color: _colors[1],
+                              thickness: 2.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Scroll for more data',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              )
-            ],
+                const SizedBox(height: 10),
+                Text(
+                  'Scroll for more data',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                )
+              ],
+            ),
           );
   }
 
@@ -210,151 +262,129 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _navigateToSpeedSelection(BuildContext context, String nextPageRoute) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SpeedSelectionPage(nextPageRoute: nextPageRoute),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _colors[2],
         elevation: 0,
-        title: const Text(
-          'Home',
-          style: TextStyle(color: Colors.black),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const CircleAvatar(
-              backgroundColor: Colors.grey,
-              child: Icon(Icons.person, color: Colors.white),
-            ),
-            onSelected: (value) {
-              if (value == 'Settings') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const SettingsScreen()),
-                );
-              } else if (value == 'Logout') {
-                FirebaseAuth.instance.signOut().then((_) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SigninScreen()),
-                    (route) => false,
-                  );
-                });
-              } else if (value == 'Filler Words') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const PersonalizedWordsPage()),
-                );
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'Settings', child: Text('Settings')),
-              const PopupMenuItem(value: 'Logout', child: Text('Logout')),
-              const PopupMenuItem(
-                  value: 'Filler Words', child: Text('Filler Words')),
-            ],
+        title: Text(
+          username != null ? 'Welcome, $username' : 'Welcome',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
-        ],
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Daily Streak',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.calendar_today, color: Colors.blue),
-                    label: const Text(
-                      'Full Streak Calendar',
-                      style: TextStyle(color: Colors.blue),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.orangeAccent),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Daily Streak',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.calendar_today,
+                              color: Colors.purple),
+                          label: const Text(
+                            'Full Streak Calendar',
+                            style: TextStyle(color: Colors.purple),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const CalendarScreen()),
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const CalendarScreen()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              TableCalendar(
-                firstDay: DateTime.utc(2010, 10, 16),
-                lastDay: DateTime.utc(2030, 3, 14),
-                focusedDay: _focusedDay,
-                calendarFormat: CalendarFormat.week,
-                onFormatChanged: (format) {},
-                onPageChanged: (focusedDay) => _focusedDay = focusedDay,
-                locale: 'en_US',
-                calendarBuilders: CalendarBuilders(
-                  defaultBuilder: (context, day, _) {
-                    if (_isSessionDate(day)) {
-                      return Container(
-                        margin: const EdgeInsets.all(6.0),
-                        decoration: BoxDecoration(
-                          color: Colors.green, // Green for session days
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${day.day}',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      );
-                    }
-                    return Center(
-                      child: Text(
-                        '${day.day}',
-                        style: const TextStyle(fontSize: 16),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  },
-                  todayBuilder: (context, day, _) {
-                    if (_isSessionDate(day)) {
-                      return Container(
-                        margin: const EdgeInsets.all(6.0),
-                        decoration: BoxDecoration(
-                          color: Colors.green, // Green if session exists today
-                          borderRadius: BorderRadius.circular(12.0),
+                      child: TableCalendar(
+                        firstDay: DateTime.utc(2010, 10, 16),
+                        lastDay: DateTime.utc(2030, 3, 14),
+                        focusedDay: _focusedDay,
+                        calendarFormat: CalendarFormat.week,
+                        onFormatChanged: (format) {},
+                        onPageChanged: (focusedDay) => _focusedDay = focusedDay,
+                        locale: 'en_US',
+                        calendarBuilders: CalendarBuilders(
+                          defaultBuilder: (context, day, _) {
+                            if (_isSessionDate(day)) {
+                              return Container(
+                                margin: const EdgeInsets.all(6.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.green, // Color for session days
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${day.day}',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              );
+                            }
+                            return Center(
+                              child: Text(
+                                '${day.day}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            );
+                          },
+                          todayBuilder: (context, day, _) {
+                            if (_isSessionDate(day)) {
+                              return Container(
+                                margin: const EdgeInsets.all(6.0),
+                                decoration: BoxDecoration(
+                                  color: Colors
+                                      .green, // Color if session exists today
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${day.day}',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              );
+                            }
+                            return Center(
+                              child: Text(
+                                '${day.day}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            );
+                          },
                         ),
-                        child: Center(
-                          child: Text(
-                            '${day.day}',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      );
-                    }
-                    return Center(
-                      child: Text(
-                        '${day.day}',
-                        style: const TextStyle(fontSize: 16),
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
@@ -397,31 +427,32 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home, size: 20),
+            icon: Icon(Icons.home, size: 20, color: _colors[10]),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history, size: 20),
+            icon: Icon(Icons.history, size: 20, color: _colors[10]),
             label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.edit_note, size: 20),
+            icon: Icon(Icons.edit_note, size: 20, color: _colors[10]),
             label: 'Filler Words',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person, size: 20),
+            icon: Icon(Icons.person, size: 20, color: _colors[10]),
             label: 'User',
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: _colors[5],
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 10,
+        backgroundColor: _colors[7],
       ),
     );
   }
@@ -442,10 +473,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         subtitle: Text(description),
-        trailing: ElevatedButton(
-          onPressed: onTap,
-          child: const Text("Start"),
-        ),
+        trailing: Icon(Icons.arrow_forward_ios, color: _colors[6]),
+        onTap: onTap,
       ),
     );
   }
