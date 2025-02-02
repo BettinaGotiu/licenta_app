@@ -41,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Color(0xFFAFCADC),
     Color(0xFFF8D6D9),
     Color(0xFF2AB5B7),
+    Colors.purple, // Purple color for chart line
   ];
 
   @override
@@ -130,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         : Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.orangeAccent),
+              border: Border.all(color: Colors.orangeAccent, width: 3),
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.all(8.0),
@@ -181,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.orangeAccent),
+                      border: Border.all(color: Colors.orangeAccent, width: 3),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.all(8.0),
@@ -213,7 +214,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ChartLineLayer(
                             items: dataPoints,
                             settings: ChartLineSettings(
-                              color: _colors[1],
+                              color:
+                                  Colors.purple, // Purple color for chart line
                               thickness: 2.0,
                             ),
                           ),
@@ -265,16 +267,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // Very light blue background color
       appBar: AppBar(
-        backgroundColor: _colors[2],
+        backgroundColor: Colors.white, // Same color as background
         elevation: 0,
+        automaticallyImplyLeading: false, // Ensure no back option
         title: Text(
           username != null ? 'Welcome, $username' : 'Welcome',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 28, // Larger font size
             fontWeight: FontWeight.bold,
             color: Colors.black,
+            fontFamily: 'Roboto', // Stylish font
           ),
         ),
       ),
@@ -285,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.orangeAccent),
+                  border: Border.all(color: Colors.orangeAccent, width: 3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(8.0),
@@ -299,25 +303,34 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        TextButton.icon(
-                          icon: const Icon(Icons.calendar_today,
-                              color: Colors.purple),
-                          label: const Text(
-                            'Full Streak Calendar',
-                            style: TextStyle(color: Colors.purple),
+                        Container(
+                          margin: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.purple, width: 3),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const CalendarScreen()),
-                            );
-                          },
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.calendar_today,
+                                color: Colors.purple),
+                            label: const Text(
+                              'Full Streak Calendar',
+                              style: TextStyle(color: Colors.purple),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CalendarScreen()),
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),
                     Container(
                       decoration: BoxDecoration(
+                        color: Colors.white, // Stronger color than background
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -396,6 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _navigateToSpeedSelection(context, '/speech_to_text');
                 },
               ),
+              const SizedBox(height: 10), // Margin for exercise cards
               buildCard(
                 title: "Practice Exercises",
                 description: "Enhance your skills with practice tasks.",
@@ -408,6 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
+              const SizedBox(height: 10), // Margin for exercise cards
               buildCard(
                 title: "Daily Challenge",
                 description: "Try a new challenge every day.",
