@@ -319,67 +319,75 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Speech to Text Demo'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.clear),
-            onPressed: _clearScreen,
-            tooltip: 'Clear Screen',
-          ),
-        ],
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: Column(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
+            padding: const EdgeInsets.only(top: 10.0, left: 16.0, right: 16.0),
+            child: _buildRetroCard(
               "Selected Pace: ${widget.selectedPace} WPM",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           if (widget.prompt != null)
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
+              padding: const EdgeInsets.only(top: 5.0, left: 16.0, right: 16.0),
+              child: _buildRetroCard(
                 "Prompt: ${widget.prompt}",
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _getCircleColor(),
-                      ),
-                    ),
-                    Text(
-                      formatElapsedTime(_elapsedStopwatch.elapsed),
-                      style: const TextStyle(
-                        fontSize: 48,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                if (widget.prompt == null)
+                  SizedBox(
+                      height: 30), // Additional space if prompt is not present
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Warnings',
-                      hintText: 'Warning messages will appear here',
-                    ),
-                    controller: TextEditingController(text: _warningMessage),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _getCircleColor(),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.5),
+                              spreadRadius: 5,
+                              blurRadius: 15,
+                              offset:
+                                  Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        formatElapsedTime(_elapsedStopwatch.elapsed),
+                        style: const TextStyle(
+                          fontSize: 48,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 30), // Space between circle and warnings
+                Padding(
+                  padding: const EdgeInsets.only(
+                      left: 16.0, right: 16.0, bottom: 16.0),
+                  child: _buildRetroCard(
+                    'Warnings: $_warningMessage',
                   ),
                 ),
               ],
@@ -415,6 +423,38 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRetroCard(String text) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.black, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white,
+            spreadRadius: -2.5,
+            offset: Offset(7, 7),
+          ),
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(7, 7),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }

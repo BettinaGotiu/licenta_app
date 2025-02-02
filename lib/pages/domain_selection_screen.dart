@@ -18,7 +18,14 @@ class DomainSelectionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Select a Domain'),
+        title: const Text(
+          'Select a Domain',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: GridView.builder(
         padding: EdgeInsets.all(10),
@@ -39,12 +46,30 @@ class DomainSelectionPage extends StatelessWidget {
                 ),
               );
             },
-            child: Card(
-              elevation: 5,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.black, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white,
+                    spreadRadius: -2.5,
+                    offset: Offset(7, 7),
+                  ),
+                  BoxShadow(
+                    color: Colors.black,
+                    offset: Offset(7, 7),
+                  ),
+                ],
+              ),
               child: Center(
                 child: Text(
                   domains[index].toUpperCase(),
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
