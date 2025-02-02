@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   List<Map<String, dynamic>> _sessions = [];
+  Set<DateTime> _sessionDates = {}; // Using Set for quick lookup
   bool _showLastFiveSessions = true;
   int _selectedIndex = 0;
 
@@ -46,14 +47,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _sessions = snapshot.docs.map((doc) => doc.data()).toList();
+        _sessionDates = snapshot.docs.map((doc) {
+          DateTime date = DateTime.parse(doc['date']);
+          return DateTime(
+              date.year, date.month, date.day); // Normalize date to YYYY-MM-DD
+        }).toSet();
       });
     }
   }
 
-  List<DateTime> _getCompletedSessionDates() {
-    return _sessions
-        .map((session) => DateTime.parse(session['date'] as String))
-        .toList();
+  bool _isSessionDate(DateTime date) {
+    return _sessionDates.contains(DateTime(date.year, date.month, date.day));
   }
 
   Widget _buildLineChart() {
@@ -168,8 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    List<DateTime> completedSessionDates = _getCompletedSessionDates();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -234,40 +236,61 @@ class _HomeScreenState extends State<HomeScreen> {
                   firstDay: DateTime.utc(2010, 10, 16),
                   lastDay: DateTime.utc(2030, 3, 14),
                   focusedDay: _focusedDay,
-                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                  },
                   calendarFormat: CalendarFormat.week,
                   onFormatChanged: (format) {},
                   onPageChanged: (focusedDay) => _focusedDay = focusedDay,
                   locale: 'en_US',
                   calendarBuilders: CalendarBuilders(
-                    defaultBuilder: (context, day, focusedDay) {
-                      if (completedSessionDates.contains(day)) {
-                        return Center(
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: Text('${day.day}',
-                                    style: TextStyle(fontSize: 16)),
-                              ),
-                              Positioned(
-                                right: 4,
-                                bottom: 4,
-                                child: Icon(Icons.check_circle,
-                                    color: Colors.green, size: 16),
-                              ),
-                            ],
+                    defaultBuilder: (context, day, _) {
+                      if (_isSessionDate(day)) {
+                        return Container(
+                          margin: const EdgeInsets.all(6.0),
+                          decoration: BoxDecoration(
+                            color: Colors.green, // Green for session days
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${day.day}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                            ),
                           ),
                         );
                       }
                       return Center(
-                          child: Text('${day.day}',
-                              style: TextStyle(fontSize: 16)));
+                        child: Text(
+                          '${day.day}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      );
+                    },
+                    todayBuilder: (context, day, _) {
+                      if (_isSessionDate(day)) {
+                        return Container(
+                          margin: const EdgeInsets.all(6.0),
+                          decoration: BoxDecoration(
+                            color:
+                                Colors.green, // Green if session exists today
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${day.day}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        );
+                      }
+                      return Center(
+                        child: Text(
+                          '${day.day}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      );
                     },
                   ),
                 ),
