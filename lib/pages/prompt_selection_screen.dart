@@ -14,7 +14,7 @@ class PromptSelectionPage extends StatefulWidget {
 
 class _PromptSelectionPageState extends State<PromptSelectionPage> {
   List<String> prompts = [];
-  String? currentPrompt;
+  int currentPromptIndex = 0;
   Set<int> shownIndexes = {};
 
   @override
@@ -36,7 +36,7 @@ class _PromptSelectionPageState extends State<PromptSelectionPage> {
     } catch (e) {
       print('Error: $e'); // Debug statement
       setState(() {
-        currentPrompt = "Error loading prompts.";
+        prompts = ["Error loading prompts."];
       });
     }
   }
@@ -51,11 +51,24 @@ class _PromptSelectionPageState extends State<PromptSelectionPage> {
         shownIndexes.contains(index) && shownIndexes.length < prompts.length);
 
     setState(() {
-      currentPrompt = prompts[index];
+      currentPromptIndex = index;
       shownIndexes.add(index);
       if (shownIndexes.length >= prompts.length) {
         shownIndexes.clear();
       }
+    });
+  }
+
+  void _previousPrompt() {
+    setState(() {
+      currentPromptIndex =
+          (currentPromptIndex - 1 + prompts.length) % prompts.length;
+    });
+  }
+
+  void _nextPrompt() {
+    setState(() {
+      currentPromptIndex = (currentPromptIndex + 1) % prompts.length;
     });
   }
 
@@ -66,67 +79,93 @@ class _PromptSelectionPageState extends State<PromptSelectionPage> {
         title: const Text('Select a Prompt'),
         backgroundColor: Colors.deepPurple,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              currentPrompt == null
-                  ? const CircularProgressIndicator()
-                  : Card(
-                      elevation: 10,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Text(
-                          currentPrompt!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Choose your Prompt',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Select a prompt from the provided options to start your challenge.',
+              style: const TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            if (prompts.isEmpty)
+              const CircularProgressIndicator()
+            else
+              Column(
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Navigate to speech to text page with the selected prompt
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SpeechToTextPage(),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: 250,
+                    height: 350,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.black, width: 3),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black,
+                          offset: Offset(15, 15),
+                          spreadRadius: -2.5,
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Keep'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 20),
-                  ElevatedButton.icon(
-                    onPressed: _getRandomPrompt,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Text(
+                        prompts[currentPromptIndex],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 30),
+                  onPressed: _previousPrompt,
+                ),
+                const SizedBox(width: 20),
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward, size: 30),
+                  onPressed: _nextPrompt,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SpeechToTextPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.check),
+              label: const Text('Keep Prompt'),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
