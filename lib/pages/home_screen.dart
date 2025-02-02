@@ -92,6 +92,47 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         : Column(
             children: [
+              const Text(
+                'Your Progress Over Time',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'This chart shows how well your speech fits within the selected speed limits over time. Higher percentages indicate better alignment with the speed limit.',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          _showLastFiveSessions ? Colors.blue[100] : null,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showLastFiveSessions = true;
+                      });
+                    },
+                    child: const Text('Last 5 Sessions'),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          !_showLastFiveSessions ? Colors.blue[100] : null,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showLastFiveSessions = false;
+                      });
+                    },
+                    child: const Text('All Time Progress'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Container(
@@ -350,28 +391,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _showLastFiveSessions = true;
-                      });
-                    },
-                    child: const Text('Last 5 Sessions'),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _showLastFiveSessions = false;
-                      });
-                    },
-                    child: const Text('All Time Progress'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
               _buildLineChart(),
             ],
           ),
