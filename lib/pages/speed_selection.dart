@@ -3,8 +3,9 @@ import 'speech_to_text.dart';
 
 class SpeedSelectionPage extends StatefulWidget {
   final String nextPageRoute;
+  final String? prompt;
 
-  const SpeedSelectionPage({Key? key, required this.nextPageRoute})
+  const SpeedSelectionPage({Key? key, required this.nextPageRoute, this.prompt})
       : super(key: key);
 
   @override
@@ -28,7 +29,10 @@ class _SpeedSelectionPageState extends State<SpeedSelectionPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => SpeechToTextPage(selectedPace: _selectedSpeed!),
+          builder: (context) => SpeechToTextPage(
+            selectedPace: _selectedSpeed!,
+            prompt: widget.prompt,
+          ),
         ),
       );
     } else {
@@ -41,6 +45,9 @@ class _SpeedSelectionPageState extends State<SpeedSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double cardWidth = MediaQuery.of(context).size.width * 0.7;
+    final double cardHeight = 80;
+
     return Scaffold(
       backgroundColor: Colors.white, // Clean background
       appBar: AppBar(
@@ -68,6 +75,7 @@ class _SpeedSelectionPageState extends State<SpeedSelectionPage> {
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 12,
+              runSpacing: 12,
               children: _speedDescriptions.keys.map((speed) {
                 return GestureDetector(
                   onTap: () {
@@ -76,15 +84,15 @@ class _SpeedSelectionPageState extends State<SpeedSelectionPage> {
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 16),
+                    width: cardWidth,
+                    height: cardHeight,
                     decoration: BoxDecoration(
                       color:
                           _selectedSpeed == speed ? Colors.blue : Colors.white,
                       border: Border.all(color: Colors.black, width: 2),
-                      borderRadius: BorderRadius.circular(34),
+                      borderRadius: BorderRadius.circular(8),
                       boxShadow: [
-                        const BoxShadow(
+                        BoxShadow(
                           color: Colors.black,
                           offset: Offset(4, 4),
                         ),
@@ -94,7 +102,7 @@ class _SpeedSelectionPageState extends State<SpeedSelectionPage> {
                     child: Text(
                       speed,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: _selectedSpeed == speed
                             ? Colors.white

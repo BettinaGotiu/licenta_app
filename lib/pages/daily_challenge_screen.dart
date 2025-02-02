@@ -112,8 +112,10 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            const SpeedSelectionPage(nextPageRoute: '/speech_to_text'),
+        builder: (context) => SpeedSelectionPage(
+          nextPageRoute: '/speech_to_text',
+          prompt: prompts[currentPromptIndex],
+        ),
       ),
     );
   }
@@ -168,15 +170,13 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
                       ],
                     ),
                     padding: const EdgeInsets.all(16),
-                    child: SingleChildScrollView(
-                      child: Center(
-                        child: Text(
-                          prompts[currentPromptIndex],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
+                    child: Center(
+                      child: Text(
+                        prompts[currentPromptIndex],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),

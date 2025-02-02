@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'speech_to_text.dart';
+import 'speed_selection.dart';
 
 class PromptSelectionPage extends StatefulWidget {
   final String domain;
@@ -70,6 +70,19 @@ class _PromptSelectionPageState extends State<PromptSelectionPage> {
     setState(() {
       currentPromptIndex = (currentPromptIndex + 1) % prompts.length;
     });
+  }
+
+  void _navigateToSpeedSelection(BuildContext context) {
+    final selectedPrompt = prompts[currentPromptIndex];
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SpeedSelectionPage(
+          nextPageRoute: '/speech_to_text',
+          prompt: selectedPrompt,
+        ),
+      ),
+    );
   }
 
   @override
@@ -147,14 +160,7 @@ class _PromptSelectionPageState extends State<PromptSelectionPage> {
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SpeechToTextPage(),
-                  ),
-                );
-              },
+              onPressed: () => _navigateToSpeedSelection(context),
               icon: const Icon(Icons.check),
               label: const Text('Keep Prompt'),
               style: ElevatedButton.styleFrom(

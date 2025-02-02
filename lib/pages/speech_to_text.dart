@@ -5,8 +5,9 @@ import 'results_screen.dart';
 
 class SpeechToTextPage extends StatefulWidget {
   final String selectedPace;
+  final String? prompt;
 
-  const SpeechToTextPage({Key? key, required this.selectedPace})
+  const SpeechToTextPage({Key? key, required this.selectedPace, this.prompt})
       : super(key: key);
 
   @override
@@ -336,6 +337,15 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
+          if (widget.prompt != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Prompt: ${widget.prompt}",
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
