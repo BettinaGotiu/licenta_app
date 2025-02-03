@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'speed_selection.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 
 class DailyChallengePage extends StatefulWidget {
   const DailyChallengePage({Key? key}) : super(key: key);
@@ -123,9 +124,52 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Challenge'),
-        backgroundColor: Colors.deepPurple,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(140.0),
+        child: ClipPath(
+          clipper: WaveClipperTwo(),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF3539AC), Color(0xFF11BDE3)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 30.0, left: 8.0),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: IconButton(
+                      icon:
+                          Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.only(top: 0.0, bottom: 20, right: 170),
+                    child: Text(
+                      'Daily Challenge',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'Nacelle',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -205,9 +249,13 @@ class _DailyChallengePageState extends State<DailyChallengePage> {
               label: const Text('Start Challenge'),
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
-                backgroundColor: Colors.green,
+                backgroundColor: Color(0xFF11BDE3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
                 ),
               ),
             ),

@@ -1,11 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'speech_to_text.dart';
-import 'home_screen.dart';
-import 'history_screen.dart';
-import 'personalized_words_page.dart';
-import 'settings_screen.dart';
-import 'signin_screen.dart';
 import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 
 // Define the color palette
@@ -59,73 +54,6 @@ class _SpeedSelectionPageState extends State<SpeedSelectionPage> {
     }
   }
 
-  void _onItemTapped(int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-        break;
-      case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HistoryScreen()),
-        );
-        break;
-      case 2:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const PersonalizedWordsPage()),
-        );
-        break;
-      case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const SettingsScreen()),
-        );
-        break;
-      case 4:
-        _showLogoutConfirmation();
-        break;
-    }
-  }
-
-  void _showLogoutConfirmation() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Logout"),
-          content: const Text("Are you sure you want to logout?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _logout();
-              },
-              child: const Text("Logout", style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const SigninScreen()),
-      (route) => false,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final double cardWidth = MediaQuery.of(context).size.width * 0.7;
@@ -145,18 +73,32 @@ class _SpeedSelectionPageState extends State<SpeedSelectionPage> {
                 end: Alignment.bottomRight,
               ),
             ),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 23.0, left: 15.0),
-                child: Text(
-                  'Select Your Speaking Pace',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily: 'Nacelle',
+            child: Padding(
+              padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
                   ),
-                ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'Select Your Speaking Pace',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'Nacelle',
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 48), // Placeholder for alignment
+                ],
               ),
             ),
           ),
@@ -271,46 +213,6 @@ class _SpeedSelectionPageState extends State<SpeedSelectionPage> {
               ),
             ),
           ],
-        ),
-      ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        child: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home, size: 24),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history, size: 24),
-              label: 'History',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.edit_note, size: 24),
-              label: 'Filler Words',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person, size: 24),
-              label: 'User',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.logout, size: 24),
-              label: 'Logout',
-            ),
-          ],
-          currentIndex: 0, // Valid index to avoid error
-          selectedItemColor: Colors.grey,
-          unselectedItemColor: Colors.grey,
-          onTap: _onItemTapped,
-          showUnselectedLabels: true,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          backgroundColor: Colors.white,
-          elevation: 10,
-          type: BottomNavigationBarType.fixed,
         ),
       ),
     );
