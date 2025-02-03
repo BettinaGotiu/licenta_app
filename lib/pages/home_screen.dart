@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'signin_screen.dart';
 import 'calendar_screen.dart';
 import 'settings_screen.dart';
@@ -29,20 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showLastFiveSessions = true;
   int _selectedIndex = 0;
 
-  final List<Color> _colors = [
-    Color(0xFFDEECDA),
-    Color(0xFFF1E4A0),
-    Color(0xFFF2BC9C),
-    Color(0xFFEDA89D),
-    Color(0xFFE47F5A),
-    Color(0xFFCCE2DC),
-    Color(0xFFCDC8D3),
-    Color(0xFFE3AEAE),
-    Color(0xFFAFCADC),
-    Color(0xFFF8D6D9),
-    Color(0xFF2AB5B7),
-    Colors.purple, // Purple color for chart line
-  ];
+  // New color palette
+  final Color primaryColor = Color(0xFF3539AC); // rgba(53,37,172,255)
+  final Color secondaryColor = Color(0xFF11BDE3); // rgba(17,189,227,255)
+  final Color accentColor = Color(0xFFFF3926); // rgba(255,57,38,255)
+  final Color cardColor = Color(0xFF973462); // rgba(151,52,98,255)
+  final Color chartLineColor = Color(0xFF7670B9); // rgba(118,112,185,255)
+  final Color backgroundColor = Color(0xFFEFF3FE); // rgba(239,243,254,255)
+  final Color textColor = Colors.black87;
 
   @override
   void initState() {
@@ -131,49 +126,89 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         : Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.orangeAccent, width: 3),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                const Text(
+                Text(
                   'Your Progress Over Time',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'This chart shows how well your speech fits within the selected speed limits over time. Higher percentages indicate better alignment with the speed limit.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[700],
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _showLastFiveSessions ? _colors[0] : null,
+                        backgroundColor: _showLastFiveSessions
+                            ? primaryColor
+                            : Colors.grey[200],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: () {
                         setState(() {
                           _showLastFiveSessions = true;
                         });
                       },
-                      child: const Text('Last 5 Sessions'),
+                      child: Text(
+                        'Last 5 Sessions',
+                        style: TextStyle(
+                          color:
+                              _showLastFiveSessions ? Colors.white : textColor,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            !_showLastFiveSessions ? _colors[0] : null,
+                        backgroundColor: !_showLastFiveSessions
+                            ? primaryColor
+                            : Colors.grey[200],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: () {
                         setState(() {
                           _showLastFiveSessions = false;
                         });
                       },
-                      child: const Text('All Time Progress'),
+                      child: Text(
+                        'All Time Progress',
+                        style: TextStyle(
+                          color:
+                              !_showLastFiveSessions ? Colors.white : textColor,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -181,46 +216,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.orangeAccent, width: 3),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      width: dataPoints.length * 100.0,
-                      height: 200,
-                      child: Chart(
-                        layers: [
-                          ChartAxisLayer(
-                            settings: ChartAxisSettings(
-                              x: ChartAxisSettingsAxis(
-                                frequency: 1.0,
-                                max: dataPoints.length.toDouble(),
-                                min: 1.0,
-                                textStyle: TextStyle(
-                                    color: Colors.black, fontSize: 12.0),
-                              ),
-                              y: ChartAxisSettingsAxis(
-                                frequency: 10.0,
-                                max: 100.0,
-                                min: 0.0,
-                                textStyle: TextStyle(
-                                    color: Colors.black, fontSize: 12.0),
-                              ),
+                    width: dataPoints.length * 100.0,
+                    height: 200,
+                    child: Chart(
+                      layers: [
+                        ChartAxisLayer(
+                          settings: ChartAxisSettings(
+                            x: ChartAxisSettingsAxis(
+                              frequency: 1.0,
+                              max: dataPoints.length.toDouble(),
+                              min: 1.0,
+                              textStyle:
+                                  TextStyle(color: textColor, fontSize: 12.0),
                             ),
-                            labelX: (value) => dateLabels[value.toInt() - 1],
-                            labelY: (value) => value.toString(),
-                          ),
-                          ChartLineLayer(
-                            items: dataPoints,
-                            settings: ChartLineSettings(
-                              color:
-                                  Colors.purple, // Purple color for chart line
-                              thickness: 2.0,
+                            y: ChartAxisSettingsAxis(
+                              frequency: 10.0,
+                              max: 100.0,
+                              min: 0.0,
+                              textStyle:
+                                  TextStyle(color: textColor, fontSize: 12.0),
                             ),
                           ),
-                        ],
-                      ),
+                          labelX: (value) => dateLabels[value.toInt() - 1],
+                          labelY: (value) => value.toString(),
+                        ),
+                        ChartLineLayer(
+                          items: dataPoints,
+                          settings: ChartLineSettings(
+                            color: chartLineColor,
+                            thickness: 2.0,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -235,50 +262,103 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    switch (index) {
-      case 0:
-        // Home is the current screen
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HistoryScreen()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const PersonalizedWordsPage()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const SettingsScreen()),
-        );
-        break;
+    if (index == 4) {
+      _showLogoutConfirmation();
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+      switch (index) {
+        case 0:
+          // Home is the current screen
+          break;
+        case 1:
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HistoryScreen()),
+          );
+          break;
+        case 2:
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const PersonalizedWordsPage()),
+          );
+          break;
+        case 3:
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsScreen()),
+          );
+          break;
+      }
     }
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _logout();
+              },
+              child: const Text("Logout", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const SigninScreen()),
+      (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Very light blue background color
-      appBar: AppBar(
-        backgroundColor: Colors.white, // Same color as background
-        elevation: 0,
-        automaticallyImplyLeading: false, // Ensure no back option
-        title: Text(
-          username != null ? 'Welcome, $username' : 'Welcome',
-          style: TextStyle(
-            fontSize: 28, // Larger font size
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            fontFamily: 'Roboto', // Stylish font
+      backgroundColor: backgroundColor,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(140.0),
+        child: ClipPath(
+          clipper: WaveClipperTwo(),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryColor, secondaryColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10.0, right: 100.0),
+                child: Text(
+                  username != null ? 'Welcome, $username' : 'Welcome',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Nacelle',
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -287,34 +367,44 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
+              // Daily Streak Calendar
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.orangeAccent, width: 3),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Daily Streak',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
                         ),
                         Container(
                           margin: const EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.purple, width: 3),
+                            color: primaryColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: TextButton.icon(
-                            icon: const Icon(Icons.calendar_today,
-                                color: Colors.purple),
-                            label: const Text(
-                              'Full Streak Calendar',
-                              style: TextStyle(color: Colors.purple),
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                             ),
                             onPressed: () {
                               Navigator.push(
@@ -324,14 +414,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const CalendarScreen()),
                               );
                             },
+                            child: Text(
+                              'Full Streak Calendar',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white, // Stronger color than background
-                        border: Border.all(color: Colors.grey),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TableCalendar(
@@ -348,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               return Container(
                                 margin: const EdgeInsets.all(6.0),
                                 decoration: BoxDecoration(
-                                  color: Colors.green, // Color for session days
+                                  color: secondaryColor,
                                   borderRadius: BorderRadius.circular(12.0),
                                 ),
                                 child: Center(
@@ -373,8 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               return Container(
                                 margin: const EdgeInsets.all(6.0),
                                 decoration: BoxDecoration(
-                                  color: Colors
-                                      .green, // Color if session exists today
+                                  color: secondaryColor,
                                   borderRadius: BorderRadius.circular(12.0),
                                 ),
                                 child: Center(
@@ -401,6 +497,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Real-Time Sessions Card
               buildCard(
                 title: "Real-Time Sessions",
                 description: "Engage in live sessions with our tool.",
@@ -409,7 +507,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   _navigateToSpeedSelection(context, '/speech_to_text');
                 },
               ),
-              const SizedBox(height: 10), // Margin for exercise cards
+              const SizedBox(height: 10),
+
+              // Practice Exercises Card
               buildCard(
                 title: "Practice Exercises",
                 description: "Enhance your skills with practice tasks.",
@@ -422,7 +522,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 10), // Margin for exercise cards
+              const SizedBox(height: 10),
+
+              // Daily Challenge Card
               buildCard(
                 title: "Daily Challenge",
                 description: "Try a new challenge every day.",
@@ -436,38 +538,52 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               const SizedBox(height: 20),
+
+              // Progress Over Time Chart
               _buildLineChart(),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home, size: 20, color: _colors[10]),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history, size: 20, color: _colors[10]),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_note, size: 20, color: _colors[10]),
-            label: 'Filler Words',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person, size: 20, color: _colors[10]),
-            label: 'User',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: _colors[5],
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
-        showUnselectedLabels: true,
-        selectedFontSize: 12,
-        unselectedFontSize: 10,
-        backgroundColor: _colors[7],
+      bottomNavigationBar: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home, size: 24),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history, size: 24),
+              label: 'History',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.edit_note, size: 24),
+              label: 'Filler Words',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person, size: 24),
+              label: 'User',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.logout, size: 24),
+              label: 'Logout',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: primaryColor,
+          unselectedItemColor: Colors.grey[600],
+          onTap: _onItemTapped,
+          showUnselectedLabels: true,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          backgroundColor: Colors.white,
+          elevation: 10,
+          type: BottomNavigationBarType.fixed,
+        ),
       ),
     );
   }
@@ -478,17 +594,29 @@ class _HomeScreenState extends State<HomeScreen> {
     required BuildContext context,
     required VoidCallback onTap,
   }) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       child: ListTile(
+        leading: Icon(Icons.play_circle_fill, color: primaryColor, size: 40),
         title: Text(
           title,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         subtitle: Text(description),
-        trailing: Icon(Icons.arrow_forward_ios, color: _colors[6]),
+        trailing: Icon(Icons.arrow_forward_ios, color: primaryColor),
         onTap: onTap,
       ),
     );
