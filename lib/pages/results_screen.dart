@@ -160,19 +160,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                     Border.all(color: Colors.black, width: 2),
                               ),
                               child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('Avg', style: TextStyle(fontSize: 12)),
-                                    Text('WPM', style: TextStyle(fontSize: 12)),
-                                    Text(widget.averageWpm.toStringAsFixed(1),
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold)),
-                                  ],
+                                child: Text(
+                                  widget.averageWpm.toStringAsFixed(1),
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),
+                            SizedBox(height: 5),
+                            Text('AVG WPM', style: TextStyle(fontSize: 16)),
                           ],
                         ),
                         Column(
@@ -200,12 +197,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                     ),
                                     Text(
                                       '${improvement.abs().toStringAsFixed(2)}%',
-                                      style: TextStyle(fontSize: 14),
+                                      style: TextStyle(fontSize: 16),
                                     ),
                                   ],
                                 ),
                               ),
                             ),
+                            SizedBox(height: 5),
+                            Text('Progress', style: TextStyle(fontSize: 16)),
                           ],
                         ),
                       ],
@@ -245,9 +244,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       Column(
                         children: [
                           SizedBox(height: 10),
-                          Text("The chart is scrollable",
-                              style:
-                                  TextStyle(fontSize: 14, color: Colors.grey)),
+                          Center(
+                            child: Text("The chart is scrollable",
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.grey)),
+                          ),
                         ],
                       ),
                     SizedBox(height: 30),
