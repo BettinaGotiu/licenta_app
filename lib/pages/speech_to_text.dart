@@ -37,7 +37,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
 
   final ScrollController _scrollController = ScrollController();
 
-  String _warningMessage = '';
+  String _warningMessage = 'Press the button to start your session';
   final int _intervalDuration = 6;
   int _listeningSessionCounter = 0;
 
@@ -106,6 +106,8 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
         _stopwatch.reset();
         _stopwatch.start();
         _currentWpm = 0.0;
+        _warningMessage =
+            ""; // Clear the warning message once the session starts
       });
 
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -289,7 +291,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
       _wpmHistory.clear();
       _currentText = "";
       _currentWpm = 0.0;
-      _warningMessage = '';
+      _warningMessage = 'Press the button to start your session';
       _withinLimitCount = 0;
       _listeningSessionCounter = 0;
       _elapsedStopwatch.reset();
@@ -340,6 +342,43 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
 
     if (_currentWpm == 0) {
       return Color(0xFFa6c6ed); // Default color when WPM is 0
+    } else if (_currentWpm < lowerLimit * 0.95) {
+      return Colors.red;
+    } else if (_currentWpm > upperLimit * 1.05) {
+      return Colors.red;
+    } else if (_currentWpm < lowerLimit || _currentWpm > upperLimit) {
+      return Colors.yellow;
+    } else {
+      return Colors.green;
+    }
+  }
+
+  Color _getCardBorderColor() {
+    if (_wpmHistory.isEmpty) {
+      return Colors.black; // Default color when no data is available
+    }
+
+    int lowerLimit, upperLimit;
+    switch (widget.selectedPace) {
+      case "100-130":
+        lowerLimit = 100;
+        upperLimit = 130;
+        break;
+      case "130-160":
+        lowerLimit = 130;
+        upperLimit = 160;
+        break;
+      case "160-210":
+        lowerLimit = 160;
+        upperLimit = 210;
+        break;
+      default:
+        lowerLimit = 0;
+        upperLimit = 0;
+    }
+
+    if (_currentWpm == 0) {
+      return Colors.black; // Default color when WPM is 0
     } else if (_currentWpm < lowerLimit * 0.95) {
       return Colors.red;
     } else if (_currentWpm > upperLimit * 1.05) {
@@ -415,10 +454,12 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
                     padding: const EdgeInsets.only(
                         left: 16.0, right: 16.0, bottom: 16.0),
                     child: _buildRetroCard(
-                      'Warnings: $_warningMessage',
+                      _isListening ? _warningMessage : '$_warningMessage',
                       fontSize:
                           20.0, // Increased font size for better visibility
                       padding: EdgeInsets.all(20.0), // Increased padding
+                      borderColor:
+                          _getCardBorderColor(), // Dynamic border color
                     ),
                   ),
                 ],
@@ -470,13 +511,15 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
 
   Widget _buildRetroCard(String text,
       {double fontSize = 16.0,
-      EdgeInsets padding = const EdgeInsets.all(16.0)}) {
+      EdgeInsets padding = const EdgeInsets.all(16.0),
+      Color borderColor = Colors.black}) {
     return Container(
       padding: padding,
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       decoration: BoxDecoration(
         color: Colors.white, // Background color of the cards
-        border: Border.all(color: Colors.black, width: 3), // Black border
+        border:
+            Border.all(color: borderColor, width: 3), // Dynamic border color
         borderRadius: BorderRadius.circular(12), // Rounded corners
         boxShadow: [
           BoxShadow(
