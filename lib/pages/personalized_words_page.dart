@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'common_words.dart';
 import 'home_screen.dart';
 import 'history_screen.dart';
@@ -56,6 +57,9 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
 
   void _deleteWord(String word) async {
     if (user != null) {
+      bool confirmed = await _showConfirmationDialog();
+      if (!confirmed) return;
+
       setState(() {
         commonWordCounts.remove(word);
       });
@@ -94,6 +98,33 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
     }
   }
 
+  Future<bool> _showConfirmationDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Confirm Deletion'),
+              content: const Text('Are you sure you want to delete this word?'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text('Delete'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
   void _onItemTapped(int index) {
     if (_selectedIndex == index) {
       return;
@@ -127,9 +158,34 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Personalized Words'),
-        automaticallyImplyLeading: false, // Remove the back button
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(140.0),
+        child: ClipPath(
+          clipper: WaveClipperTwo(),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF3539AC), Color(0xFF11BDE3)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Text(
+                  'Personalized Words',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Nacelle',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -144,92 +200,136 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
                     return Chip(
                       label: Text(word),
                       onDeleted: _isEditing ? () => _deleteWord(word) : null,
+                      deleteIcon: _isEditing
+                          ? Icon(Icons.delete, color: Color(0xFFFF3926))
+                          : null,
+                      backgroundColor: _isEditing ? Colors.grey[200] : null,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          color: _isEditing
+                              ? Color(0xFFFF3926)
+                              : Color(0xFF11BDE3),
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     );
                   }).toList(),
                 ),
               ),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Add New Word'),
+                          content: TextField(
+                            controller: _wordController,
+                            decoration:
+                                const InputDecoration(hintText: 'Enter word'),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                if (_wordController.text.trim().isNotEmpty) {
+                                  _addWord(_wordController.text.trim());
+                                  _wordController.clear();
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              child: const Text('Add'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  icon: Icon(Icons.add),
+                  label: Text('Add'),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFF3539AC),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _isEditing = !_isEditing;
+                    });
+                  },
+                  icon: Icon(
+                    _isEditing ? Icons.check : Icons.edit,
+                  ),
+                  label: _isEditing ? Text('Done') : Text('Edit'),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFF3539AC),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Add New Word'),
-                    content: TextField(
-                      controller: _wordController,
-                      decoration: const InputDecoration(hintText: 'Enter word'),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          if (_wordController.text.trim().isNotEmpty) {
-                            _addWord(_wordController.text.trim());
-                            _wordController.clear();
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        child: const Text('Add'),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            label: const Text('Add'),
-            icon: const Icon(Icons.add),
-          ),
-          const SizedBox(height: 10),
-          FloatingActionButton.extended(
-            onPressed: () {
-              setState(() {
-                _isEditing = !_isEditing;
-              });
-            },
-            label: _isEditing ? const Text('Done') : const Text('Edit'),
-            icon: const Icon(Icons.edit),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home, size: 20),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history, size: 20),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_note, size: 20),
-            label: 'Filler Words',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person, size: 20),
-            label: 'User',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
-        showUnselectedLabels: true,
-        selectedFontSize: 12,
-        unselectedFontSize: 10,
-        type: BottomNavigationBarType.fixed,
+      bottomNavigationBar: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home, size: 24),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history, size: 24),
+              label: 'History',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.edit_note, size: 24),
+              label: 'Filler Words',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person, size: 24),
+              label: 'User',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.logout, size: 24),
+              label: 'Logout',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Color(0xFF3539AC),
+          unselectedItemColor: Colors.grey[600],
+          onTap: _onItemTapped,
+          showUnselectedLabels: true,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          backgroundColor: Colors.white,
+          elevation: 10,
+          type: BottomNavigationBarType.fixed,
+        ),
       ),
     );
   }
