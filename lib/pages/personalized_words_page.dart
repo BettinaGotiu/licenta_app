@@ -172,9 +172,9 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
             ),
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.only(top: 10.0),
+                padding: const EdgeInsets.only(top: 10.0, right: 180),
                 child: Text(
-                  'Personalized Words',
+                  'Filler Words',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -277,6 +277,40 @@ class _PersonalizedWordsPageState extends State<PersonalizedWordsPage> {
                     _isEditing ? Icons.check : Icons.edit,
                   ),
                   label: _isEditing ? Text('Done') : Text('Edit'),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFF3539AC),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Help'),
+                          content: const Text(
+                            'This page allows you to manage and track filler words, which are commonly used words in speeches and daily conversations when people lose their train of thought or do not know what to say. These words should be avoided for more effective communication. You can add specific words that you tend to use frequently, and the app will help you monitor and reduce their usage over time.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  icon: Icon(Icons.help_outline),
+                  label: Text('Help'),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Color(0xFF3539AC),

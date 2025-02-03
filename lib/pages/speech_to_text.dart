@@ -519,7 +519,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
       decoration: BoxDecoration(
         color: Colors.white, // Background color of the cards
         border:
-            Border.all(color: borderColor, width: 3), // Dynamic border color
+            Border.all(color: borderColor, width: 5), // Dynamic border color
         borderRadius: BorderRadius.circular(12), // Rounded corners
         boxShadow: [
           BoxShadow(
