@@ -104,7 +104,7 @@ class _PromptSelectionPageState extends State<PromptSelectionPage> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 30.0, left: 8.0),
+                  padding: const EdgeInsets.only(top: 20.0, left: 8.0),
                   child: Align(
                     alignment: Alignment.topLeft,
                     child: IconButton(
@@ -119,7 +119,7 @@ class _PromptSelectionPageState extends State<PromptSelectionPage> {
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(
-                        top: 0.0, right: 40.0, bottom: 40),
+                        top: 0.0, right: 40.0, bottom: 50),
                     child: Text(
                       'Choose your prompt',
                       style: TextStyle(

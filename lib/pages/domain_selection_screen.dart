@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'prompt_selection_screen.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
+
+// Define the color palette
+final Color primaryColor = Color(0xFF3539AC);
+final Color secondaryColor = Color(0xFF11BDE3);
 
 class DomainSelectionPage extends StatelessWidget {
   final List<String> domains = [
@@ -17,15 +22,52 @@ class DomainSelectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Select a Domain',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(140.0),
+        child: ClipPath(
+          clipper: WaveClipperTwo(),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryColor, secondaryColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 25.0, left: 8.0),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: IconButton(
+                      icon:
+                          Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        top: 0.0, right: 80.0, bottom: 20),
+                    child: Text(
+                      'Domain Selection',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'Nacelle',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        centerTitle: true,
       ),
       body: GridView.builder(
         padding: EdgeInsets.all(10),
@@ -49,16 +91,20 @@ class DomainSelectionPage extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border.all(color: Colors.black, width: 3),
+                border: Border.all(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.white,
-                    spreadRadius: -2.5,
-                    offset: Offset(7, 7),
+                    color: Colors.black.withOpacity(0.25),
+                    spreadRadius: 2,
+                    blurRadius: 8,
+                    offset: Offset(4, 4), // changes position of shadow
                   ),
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(7, 7),
+                    color: Colors.white,
+                    spreadRadius: -2,
+                    blurRadius: 8,
+                    offset: Offset(-4, -4), // changes position of shadow
                   ),
                 ],
               ),
@@ -66,7 +112,7 @@ class DomainSelectionPage extends StatelessWidget {
                 child: Text(
                   domains[index].toUpperCase(),
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
