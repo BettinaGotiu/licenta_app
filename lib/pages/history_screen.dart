@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
 import 'home_screen.dart';
 import 'settings_screen.dart';
+import 'signin_screen.dart';
+import 'personalized_words_page.dart';
+
+// Define the color palette
+final Color primaryColor = Color(0xFF3539AC);
+final Color secondaryColor = Color(0xFF11BDE3);
+final Color accentColor = Color(0xFFFF3926);
+final Color cardColor = Color(0xFF973462);
+final Color chartLineColor = Color(0xFF7670B9);
+final Color backgroundColor = Color(0xFFEFF3FE);
+final Color textColor = Colors.black87;
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -16,7 +28,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   late User? user;
   List<Map<String, dynamic>> _sessions = [];
-  int _selectedIndex = 1;
+  int _selectedIndex = 1; // Highlight History widget
   bool _isEditMode = false;
   bool _isLoading = true;
   bool _noSessionsFound = false;
@@ -37,7 +49,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           .orderBy('date')
           .get();
 
-      await Future.delayed(const Duration(seconds: 2)); // Artificial delay
+      await Future.delayed(const Duration(seconds: 0)); // Artificial delay
 
       setState(() {
         _sessions = snapshot.docs
@@ -70,9 +82,50 @@ class _HistoryScreenState extends State<HistoryScreen> {
     } else if (index == 2) {
       Navigator.pushReplacement(
         context,
+        MaterialPageRoute(builder: (context) => const PersonalizedWordsPage()),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
         MaterialPageRoute(builder: (context) => const SettingsScreen()),
       );
+    } else if (index == 4) {
+      _showLogoutConfirmation();
     }
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _logout();
+              },
+              child: const Text("Logout", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const SigninScreen()),
+      (route) => false,
+    );
   }
 
   void _toggleEditMode() {
@@ -112,7 +165,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 _deleteSession(sessionId);
                 Navigator.of(context).pop();
               },
-              child: const Text("Delete", style: TextStyle(color: Colors.red)),
+              child: Text("Delete", style: TextStyle(color: accentColor)),
             ),
           ],
         );
@@ -127,135 +180,199 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('History'),
-        automaticallyImplyLeading: false, // Remove the back button
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton.icon(
-              onPressed: _toggleEditMode,
-              icon: Icon(_isEditMode ? Icons.check : Icons.edit,
-                  color: Colors.white),
-              label: Text(_isEditMode ? "Done" : "Edit",
-                  style: const TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isEditMode ? Colors.green : Colors.red,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+      backgroundColor: backgroundColor,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(140.0),
+        child: Stack(
+          children: [
+            ClipPath(
+              clipper: WaveClipperTwo(),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [primaryColor, secondaryColor],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _noSessionsFound
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.info_outline, size: 100, color: Colors.grey),
-                        SizedBox(height: 20),
-                        Text(
-                          'No sessions found',
-                          style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          'To see your session history, record at least one activity from the exercises on the Home screen.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  )
-                : SingleChildScrollView(
-                    child: CustomPaint(
-                      painter: PathPainter(_sessions.length),
-                      child: SizedBox(
-                        height: _sessions.length * 250.0,
-                        child: Stack(
-                          children: List.generate(
-                            _sessions.length,
-                            (index) {
-                              final isEven = index % 2 == 0;
-                              final randomOffset =
-                                  Random().nextDouble() * 40 - 20;
-                              final positionLeft = isEven
-                                  ? MediaQuery.of(context).size.width / 2 -
-                                      120 +
-                                      randomOffset
-                                  : MediaQuery.of(context).size.width / 2 +
-                                      20 +
-                                      randomOffset;
-                              final sessionSize = 90.0;
-                              final sessionDateTime =
-                                  DateTime.parse(_sessions[index]['date']);
-                              final formattedDateTime =
-                                  _formatDate(sessionDateTime);
-                              return Positioned(
-                                top: index * 250.0,
-                                left: positionLeft.clamp(
-                                    16.0,
-                                    MediaQuery.of(context).size.width -
-                                        166.0), // Account for padding
-                                child: GestureDetector(
-                                  onTap: !_isEditMode
-                                      ? () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  SessionDetailScreen(
-                                                session: _sessions[index],
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      : null,
-                                  child: SessionNode(
-                                    sessionNumber: index + 1,
-                                    sessionDate: formattedDateTime,
-                                    size: sessionSize,
-                                    isEditMode: _isEditMode,
-                                    onDelete: () {
-                                      _confirmDeleteSession(
-                                          _sessions[index]['id'],
-                                          formattedDateTime);
-                                    },
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10.0, right: 100.0),
+                    child: Text(
+                      'Sessions History',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'Nacelle',
                       ),
                     ),
                   ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -0.5,
+              right: 10,
+              child: ElevatedButton.icon(
+                onPressed: _toggleEditMode,
+                icon: Icon(
+                  _isEditMode ? Icons.check : Icons.edit,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  _isEditMode ? "Done" : "Edit",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'User',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        onTap: _onItemTapped,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _noSessionsFound
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.info_outline,
+                                  size: 100, color: Colors.grey),
+                              SizedBox(height: 20),
+                              Text(
+                                'No sessions found',
+                                style: TextStyle(
+                                    fontSize: 24, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                'To see your session history, record at least one activity from the exercises on the Home screen.',
+                                textAlign: TextAlign.center,
+                                style:
+                                    TextStyle(fontSize: 16, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          child: CustomPaint(
+                            painter: PathPainter(_sessions.length),
+                            child: SizedBox(
+                              height: _sessions.length * 250.0,
+                              child: Stack(
+                                children: List.generate(
+                                  _sessions.length,
+                                  (index) {
+                                    final isEven = index % 2 == 0;
+                                    final randomOffset =
+                                        Random().nextDouble() * 40 - 20;
+                                    final positionLeft = isEven
+                                        ? MediaQuery.of(context).size.width /
+                                                2 -
+                                            120 +
+                                            randomOffset
+                                        : MediaQuery.of(context).size.width /
+                                                2 +
+                                            20 +
+                                            randomOffset;
+                                    final sessionSize = 90.0;
+                                    final sessionDateTime = DateTime.parse(
+                                        _sessions[index]['date']);
+                                    final formattedDateTime =
+                                        _formatDate(sessionDateTime);
+                                    return Positioned(
+                                      top: index * 250.0,
+                                      left: positionLeft.clamp(
+                                          16.0,
+                                          MediaQuery.of(context).size.width -
+                                              166.0), // Account for padding
+                                      child: GestureDetector(
+                                        onTap: !_isEditMode
+                                            ? () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        SessionDetailScreen(
+                                                      session: _sessions[index],
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            : null,
+                                        child: SessionNode(
+                                          sessionNumber: index + 1,
+                                          sessionDate: formattedDateTime,
+                                          size: sessionSize,
+                                          isEditMode: _isEditMode,
+                                          onDelete: () {
+                                            _confirmDeleteSession(
+                                                _sessions[index]['id'],
+                                                formattedDateTime);
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home, size: 24),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history, size: 24),
+              label: 'History',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.edit_note, size: 24),
+              label: 'Filler Words',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person, size: 24),
+              label: 'User',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.logout, size: 24),
+              label: 'Logout',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: primaryColor,
+          unselectedItemColor: Colors.grey[600],
+          onTap: _onItemTapped,
+          showUnselectedLabels: true,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          backgroundColor: Colors.white,
+          elevation: 10,
+          type: BottomNavigationBarType.fixed,
+        ),
       ),
     );
   }
@@ -269,7 +386,7 @@ class PathPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.orangeAccent
+      ..color = secondaryColor
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
@@ -322,7 +439,7 @@ class SessionNode extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: isEditMode ? Colors.red.withOpacity(0.6) : Colors.purple,
+              color: isEditMode ? accentColor.withOpacity(0.6) : cardColor,
               borderRadius: BorderRadius.circular(50),
               boxShadow: [
                 BoxShadow(
@@ -366,8 +483,10 @@ class SessionDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text('Session Details'),
+        backgroundColor: primaryColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
