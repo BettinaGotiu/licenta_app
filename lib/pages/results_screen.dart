@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'home_screen.dart';
-import 'common_words.dart'; // Import the common_words file
-import 'package:uuid/uuid.dart'; // Import UUID package
-import 'package:intl/intl.dart'; // Import intl package
+import 'common_words.dart';
+import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 
 class ResultsScreen extends StatefulWidget {
   final String spokenText;
@@ -25,358 +25,405 @@ class ResultsScreen extends StatefulWidget {
 
 class _ResultsScreenState extends State<ResultsScreen> {
   late Map<String, int> _commonWordCounts;
-  bool _isLoading = true; // For displaying the loading widget
+  bool _isLoading = true;
   double? _lastSessionsAverage;
   List<Map<String, dynamic>> _sessions = [];
-  Map<String, double> _averageWordCounts = {};
-  bool _showText = false; // For showing/hiding the text
+  bool _showText = false;
+  bool _showLastFive = true; // Track which data to display
 
   @override
   void initState() {
     super.initState();
     _commonWordCounts = {};
-    _countCommonWords();
     _fetchPreviousSessionsData();
-  }
-
-  void _countCommonWords() {
-    // Initialize counts to 0
-    commonWords.forEach((expression) {
-      _commonWordCounts[expression] = 0;
-    });
-
-    // Count occurrences of each expression
-    for (String expression in commonWords) {
-      _commonWordCounts[expression] =
-          _countOccurrences(widget.spokenText, expression);
-    }
-  }
-
-  int _countOccurrences(String text, String pattern) {
-    RegExp regExp = RegExp(RegExp.escape(pattern), caseSensitive: false);
-    return regExp.allMatches(text).length;
   }
 
   Future<void> _fetchPreviousSessionsData() async {
     User? user = FirebaseAuth.instance.currentUser;
-
     if (user != null) {
-      String userId = user.uid;
       CollectionReference userCollection = FirebaseFirestore.instance
           .collection('user_data')
-          .doc(userId)
+          .doc(user.uid)
           .collection('sessions');
 
-      // Fetch all sessions
       final snapshot = await userCollection.orderBy('date').get();
-
       setState(() {
         _sessions = snapshot.docs
             .map((doc) => doc.data() as Map<String, dynamic>)
             .toList();
         _lastSessionsAverage = _sessions.isNotEmpty
             ? _sessions
-                    .map(
-                        (session) => session['withinLimitPercentage'] as double)
+                    .map((s) => s['withinLimitPercentage'] as double)
                     .reduce((a, b) => a + b) /
                 _sessions.length
             : 0.0;
-      });
-
-      // Calculate the average occurrences of each word
-      _calculateAverageWordCounts();
-
-      // Save the current session
-      await _saveResultsToFirestore(userCollection);
-    }
-  }
-
-  void _calculateAverageWordCounts() {
-    Map<String, int> totalWordCounts = {};
-
-    // Initialize counts to 0
-    commonWords.forEach((expression) {
-      totalWordCounts[expression] = 0;
-    });
-
-    // Sum occurrences of each expression across all sessions
-    for (var session in _sessions) {
-      Map<String, int> sessionWordCounts =
-          Map<String, int>.from(session['commonWordCounts']);
-      sessionWordCounts.forEach((word, count) {
-        totalWordCounts[word] = (totalWordCounts[word] ?? 0) + count;
+        _isLoading = false;
       });
     }
-
-    // Calculate the average occurrences
-    int sessionCount = _sessions.length;
-    totalWordCounts.forEach((word, totalCount) {
-      _averageWordCounts[word] = totalCount / sessionCount;
-    });
   }
 
-  Future<void> _saveResultsToFirestore(
-      CollectionReference userCollection) async {
-    // Generate a unique ID for the session
-    String sessionId = Uuid().v4();
-
-    // Save the session data as a new document
-    await userCollection.doc(sessionId).set({
-      'averageWpm': widget.averageWpm,
-      'date': DateTime.now().toIso8601String(),
-      'withinLimitPercentage': widget.withinLimitPercentage,
-      'spokenText': widget.spokenText,
-      'commonWordCounts': _commonWordCounts,
-    });
-
-    setState(() {
-      _isLoading = false; // Stop showing the loading widget
-    });
+  Color _getContourColor(double percentage) {
+    if (percentage > 70) return Colors.green;
+    if (percentage > 40) return Colors.yellow;
+    if (percentage > 0) return Colors.red;
+    return Colors.grey;
   }
 
-  Widget _buildLineChart() {
-    // Get the last 5 sessions
-    List<Map<String, dynamic>> sessionsToShow = _sessions
-        .skip(_sessions.length > 5 ? _sessions.length - 5 : 0)
-        .toList();
+  @override
+  Widget build(BuildContext context) {
+    double improvement = _lastSessionsAverage != null
+        ? widget.withinLimitPercentage - _lastSessionsAverage!
+        : 0.0;
 
-    List<ChartLineDataItem> dataPoints = sessionsToShow
-        .asMap()
-        .entries
-        .map((entry) => ChartLineDataItem(
-              x: entry.key.toDouble() + 1,
-              value: entry.value['withinLimitPercentage'].toDouble(),
-            ))
-        .toList();
+    Color contourColor = _getContourColor(widget.withinLimitPercentage);
 
-    List<String> dateLabels = sessionsToShow
-        .map((session) => DateFormat('yyyy-MM-dd')
-            .format(DateTime.parse(session['date'] as String)))
-        .toList();
+    List<Map<String, dynamic>> displayedSessions =
+        _showLastFive ? _sessions.take(5).toList() : _sessions;
 
-    return _sessions.isEmpty
-        ? Container(
-            height: 200,
-            child: Center(
-              child: Text(
-                'No session data available',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          )
-        : SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Container(
-              width: dataPoints.length *
-                  100, // Adjust the width based on the number of data points
-              height: 200,
-              child: Chart(
-                layers: [
-                  ChartAxisLayer(
-                    settings: ChartAxisSettings(
-                      x: ChartAxisSettingsAxis(
-                        frequency: 1.0,
-                        max: dataPoints.length.toDouble(),
-                        min: 1.0,
-                        textStyle:
-                            TextStyle(color: Colors.black, fontSize: 12.0),
-                      ),
-                      y: ChartAxisSettingsAxis(
-                        frequency: 10.0,
-                        max: 100.0,
-                        min: 0.0,
-                        textStyle:
-                            TextStyle(color: Colors.black, fontSize: 12.0),
+    double chartWidth =
+        displayedSessions.length * 60.0; // Adjust width as needed
+    double maxChartWidth = _sessions.length * 60.0; // Width for all sessions
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Results')),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start, // Align to the left
+                  children: [
+                    // Stylish Text
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: Text(
+                        'Within Limit Percentage',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                    labelX: (value) => dateLabels[value.toInt() - 1],
-                    labelY: (value) => value.toString(),
-                  ),
-                  ChartLineLayer(
-                    items: dataPoints,
-                    settings: ChartLineSettings(
-                      color: Colors.blue,
-                      thickness: 2.0,
+                    SizedBox(height: 10),
+
+                    // Within Limit Percentage Bubble
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CustomPaint(
+                              size: Size(160, 160),
+                              painter:
+                                  ContourPainter(widget.withinLimitPercentage),
+                            ),
+                            Container(
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: Colors.black, width: 4),
+                                color: Colors.white,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${widget.withinLimitPercentage.toStringAsFixed(1)}%',
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    SizedBox(height: 30),
+
+                    // Row with Average WPM and Improvement Indicator
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          children: [
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: Colors.black, width: 2),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('Avg', style: TextStyle(fontSize: 12)),
+                                    Text('WPM', style: TextStyle(fontSize: 12)),
+                                    Text(widget.averageWpm.toStringAsFixed(1),
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: Colors.black, width: 2),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      improvement >= 0
+                                          ? Icons.arrow_upward
+                                          : Icons.arrow_downward,
+                                      color: improvement >= 0
+                                          ? Colors.green
+                                          : Colors.red,
+                                      size: 24,
+                                    ),
+                                    Text(
+                                      '${improvement.abs().toStringAsFixed(2)}%',
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 30),
+
+                    // Message Card
+                    Card(
+                      color: Colors.blue.shade50,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          improvement > 0
+                              ? 'Great job! Your within limit percentage has improved by ${improvement.toStringAsFixed(2)}%'
+                              : improvement < 0
+                                  ? 'Keep trying! Your within limit percentage is lower by ${improvement.abs().toStringAsFixed(2)}%'
+                                  : 'You have maintained the same within limit percentage as previous sessions.',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 30),
+
+                    // Line Chart
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Container(
+                        width: _showLastFive ? chartWidth : maxChartWidth,
+                        child: _buildLineChart(displayedSessions),
+                      ),
+                    ),
+                    if (!_showLastFive)
+                      Column(
+                        children: [
+                          SizedBox(height: 10),
+                          Text("The chart is scrollable",
+                              style:
+                                  TextStyle(fontSize: 14, color: Colors.grey)),
+                        ],
+                      ),
+                    SizedBox(height: 30),
+
+                    // Toggle Buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _showLastFive = true;
+                            });
+                          },
+                          child: Text("Last 5 Sessions"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _showLastFive = false;
+                            });
+                          },
+                          child: Text("All Sessions"),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 30),
+
+                    // Filler Words Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Filler Words',
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            ..._commonWordCounts.entries
+                                .where((entry) => entry.value > 2)
+                                .map((entry) {
+                              return Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(entry.key,
+                                      style: TextStyle(fontSize: 16)),
+                                  Text('${entry.value}',
+                                      style: TextStyle(fontSize: 16)),
+                                ],
+                              );
+                            }).toList(),
+                            if (!_commonWordCounts.values
+                                .any((count) => count > 2))
+                              Text(
+                                  'Great job! No common words appeared more than twice.'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 30),
+
+                    // Access Speech Text Button
+                    ElevatedButton(
+                      onPressed: () => _showSpokenTextPopup(),
+                      child: Text("Access Speech Text"),
+                    ),
+                  ],
+                ),
               ),
             ),
-          );
+    );
+  }
+
+  Widget _buildLineChart(List<Map<String, dynamic>> sessions) {
+    return Container(
+      height: 200,
+      padding: const EdgeInsets.all(16),
+      child: Chart(
+        layers: [
+          ChartAxisLayer(
+            labelX: (value) => value.toInt().toString(),
+            labelY: (value) => value.toString(),
+            settings: ChartAxisSettings(
+              x: ChartAxisSettingsAxis(
+                frequency: 1.0,
+                max: sessions.length.toDouble(),
+                min: 1.0,
+                textStyle: TextStyle(color: Colors.black),
+              ),
+              y: ChartAxisSettingsAxis(
+                frequency: 10.0,
+                max: 100.0,
+                min: 0.0,
+                textStyle: TextStyle(color: Colors.black),
+              ),
+            ),
+          ),
+          ChartLineLayer(
+            items: sessions
+                .asMap()
+                .entries
+                .map((entry) => ChartLineDataItem(
+                      x: entry.key + 1,
+                      value: entry.value['withinLimitPercentage'].toDouble(),
+                    ))
+                .toList(),
+            settings: ChartLineSettings(
+              color: Colors.blue,
+              thickness: 2.0,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSpokenTextPopup() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
           title: Text("Spoken Text"),
           content: SingleChildScrollView(
-            child: RichText(
-              text: TextSpan(
-                children: _buildHighlightedText(widget.spokenText),
-              ),
-            ),
+            child: Text(widget.spokenText),
           ),
           actions: [
             TextButton(
-              child: Text("Close"),
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              child: Text("Close"),
             ),
           ],
         );
       },
     );
   }
+}
 
-  List<TextSpan> _buildHighlightedText(String text) {
-    List<TextSpan> spans = [];
-    text.split(' ').forEach((word) {
-      if (_commonWordCounts.containsKey(word.toLowerCase()) &&
-          _commonWordCounts[word.toLowerCase()]! > 2) {
-        spans.add(TextSpan(
-            text: '$word ',
-            style: TextStyle(
-                color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)));
-      } else {
-        spans.add(TextSpan(
-            text: '$word ',
-            style: TextStyle(fontSize: 16, color: Colors.black)));
-      }
-    });
-    return spans;
+class ContourPainter extends CustomPainter {
+  final double percentage;
+
+  ContourPainter(this.percentage);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = _getContourColor(percentage)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8; // Adjusted to make it more visible
+
+    final Paint backgroundPaint = Paint()
+      ..color = Colors.grey[300]!
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8; // Adjusted to make it more visible
+
+    final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final double startAngle = -90.0;
+    final double sweepAngle = 360.0 * (percentage / 100.0);
+
+    canvas.drawArc(rect, startAngle * (3.14159 / 180.0),
+        360.0 * (3.14159 / 180.0), false, backgroundPaint);
+    canvas.drawArc(rect, startAngle * (3.14159 / 180.0),
+        sweepAngle * (3.14159 / 180.0), false, paint);
   }
 
   @override
-  Widget build(BuildContext context) {
-    String comparisonMessage = '';
-    if (_lastSessionsAverage != null) {
-      double improvement = widget.withinLimitPercentage - _lastSessionsAverage!;
-      if (improvement > 0) {
-        comparisonMessage =
-            'Great job! Your within limit percentage has improved by ${improvement.toStringAsFixed(2)}% compared to the average of the last sessions.';
-      } else if (improvement < 0) {
-        comparisonMessage =
-            'Keep trying! Your within limit percentage is lower by ${improvement.abs().toStringAsFixed(2)}% compared to the average of the last sessions.';
-      } else {
-        comparisonMessage =
-            'You have maintained the same within limit percentage as the average of the last sessions.';
-      }
-    }
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
+  }
 
-    bool hasCommonWords = _commonWordCounts.values.any((count) => count >= 2);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Results'),
-      ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator()) // Display loading widget
-          : Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    // Make the main content scrollable
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Average Words Per Minute:',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            widget.averageWpm.toStringAsFixed(2),
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Percentage of Time Within Selected Pace:',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '${widget.withinLimitPercentage.toStringAsFixed(2)}%',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 20),
-                          _buildLineChart(), // Add the line chart here
-                          const SizedBox(height: 20),
-                          if (comparisonMessage.isNotEmpty)
-                            Text(
-                              comparisonMessage,
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green),
-                            ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Common Words and Expressions:',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          if (hasCommonWords)
-                            ..._commonWordCounts.entries
-                                .where((entry) => entry.value >= 2)
-                                .map((entry) {
-                              double averageCount =
-                                  _averageWordCounts[entry.key] ?? 0.0;
-                              double percentageDifference =
-                                  ((entry.value - averageCount) /
-                                          averageCount) *
-                                      100;
-                              return Text(
-                                '${entry.key}: ${entry.value} times (current session is ${percentageDifference.toStringAsFixed(2)}% compared to the average of ${averageCount.toStringAsFixed(2)} occurrences/session)',
-                                style: const TextStyle(fontSize: 16),
-                              );
-                            }).toList()
-                          else
-                            Text(
-                              'Great job! No common words appeared more than twice.',
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: _showSpokenTextPopup,
-                            child: Text("Show Appearances"),
-                          ),
-                          const SizedBox(
-                              height: 20), // Add some space at the bottom
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  color: Colors.blue,
-                  child: Center(
-                    child: FloatingActionButton(
-                      backgroundColor: Colors.blue,
-                      child: const Icon(Icons.home, color: Colors.white),
-                      onPressed: () {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const HomeScreen()),
-                          (Route<dynamic> route) => false,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-    );
+  Color _getContourColor(double percentage) {
+    if (percentage > 70) return Colors.green;
+    if (percentage > 40) return Colors.yellow;
+    if (percentage > 0) return Colors.red;
+    return Colors.grey;
   }
 }
