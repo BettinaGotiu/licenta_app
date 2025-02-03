@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'signin_screen.dart';
 import 'home_screen.dart';
 import 'history_screen.dart';
+import 'personalized_words_page.dart'; // Import the Filler Words screen
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -17,10 +19,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   late User? user;
-  int _selectedIndex = 2;
+  int _selectedIndex = 3; // Highlight the User widget
   bool _passwordVisible = false;
   Color _borderColor = Colors.transparent;
   double _borderThickness = 2.0;
+
+  // New color palette
+  final Color primaryColor = Color(0xFF3539AC); // rgba(53,37,172,255)
+  final Color secondaryColor = Color(0xFF11BDE3); // rgba(17,189,227,255)
+  final Color accentColor = Color(0xFFFF3926); // rgba(255,57,38,255)
+  final Color backgroundColor = Color(0xFFEFF3FE); // rgba(239,243,254,255)
+  final Color textColor = Colors.black87;
 
   @override
   void initState() {
@@ -30,7 +39,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _emailController.text = user?.email ?? '';
   }
 
-  // Function to re-authenticate the user
   Future<bool> _reauthenticateUser() async {
     try {
       AuthCredential credential = EmailAuthProvider.credential(
@@ -55,7 +63,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Function to update the password
   Future<void> _updatePassword() async {
     try {
       await user?.updatePassword(_passwordController.text);
@@ -70,7 +77,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Function to show a popup dialog for entering a new password
   void _showPasswordDialog() {
     _passwordController.clear();
     _passwordVisible = false;
@@ -101,7 +107,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Function to update the username
   Future<void> _updateUsername(
       BuildContext context, StateSetter setState) async {
     try {
@@ -130,7 +135,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Function to show a popup dialog for entering a new username
   void _showUsernameDialog() {
     _usernameController.text =
         user?.displayName ?? ''; // Reset to original value
@@ -214,7 +218,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Function to update the email
   Future<void> _updateEmail(BuildContext context, StateSetter setState) async {
     bool reauthenticated = await _reauthenticateUser();
     if (reauthenticated) {
@@ -253,7 +256,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Function to show a popup dialog for entering a new email
   void _showEmailDialog() {
     _emailController.text = user?.email ?? ''; // Reset to original value
     _passwordController.clear(); // Clear the password field initially
@@ -321,7 +323,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Function to show the delete confirmation dialog
   Future<void> _confirmDeleteAccount() async {
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -353,7 +354,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Function to delete the account
   Future<void> _deleteAccount() async {
     try {
       await user?.delete();
@@ -373,7 +373,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Function to log out the user
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushAndRemoveUntil(
@@ -386,116 +385,244 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
 
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HistoryScreen()),
-      );
-    } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const SettingsScreen()),
-      );
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HistoryScreen()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  const PersonalizedWordsPage()), // Navigate to Filler Words screen
+        );
+        break;
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SettingsScreen()),
+        );
+        break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Settings"),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+      backgroundColor: backgroundColor,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(130.0),
+        child: ClipPath(
+          clipper: WaveClipperTwo(),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryColor, secondaryColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10.0, right: 220.0),
+                child: Text(
+                  "Settings",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Nacelle',
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: ListView(
-          children: [
-            const CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.grey,
-              child: Icon(Icons.person, size: 50, color: Colors.white),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    "Username: ${user?.displayName ?? 'Unknown'}",
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // Profile Section
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: _showUsernameDialog,
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    const CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.grey,
+                      child: Icon(Icons.person, size: 50, color: Colors.white),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Username: ${user?.displayName ?? 'Unknown'}",
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: _showUsernameDialog,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Email: ${user?.email ?? 'Unknown'}",
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: _showEmailDialog,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              ),
+              const SizedBox(height: 20),
+
+              // Update Password Card
+              buildCard(
+                title: "Update Password",
+                description: "Change your account password.",
+                onTap: _showPasswordDialog,
+                icon: Icons.lock,
+              ),
+              const SizedBox(height: 10),
+
+              // Logout Card
+              buildCard(
+                title: "Logout",
+                description: "Sign out of your account.",
+                onTap: _logout,
+                icon: Icons.logout, // Door leaving icon
+              ),
+              const SizedBox(height: 10),
+
+              // Delete Account Card
+              buildCard(
+                title: "Delete Account",
+                description: "Permanently delete your account.",
+                onTap: _confirmDeleteAccount,
+                icon: Icons.delete, // Garbage icon
+                isDestructive: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home, size: 24),
+              label: 'Home',
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    "Email: ${user?.email ?? 'Unknown'}",
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: _showEmailDialog,
-                ),
-              ],
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history, size: 24),
+              label: 'History',
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showPasswordDialog, // Show dialog for password update
-              child: const Text("Update Password"),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.edit_note, size: 24),
+              label: 'Filler Words',
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _logout, // Logout the user
-              child: const Text("Logout"),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person, size: 24),
+              label: 'User',
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _confirmDeleteAccount, // Show confirmation dialog
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text("Delete Account"),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.logout, size: 24),
+              label: 'Logout',
             ),
           ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: primaryColor,
+          unselectedItemColor: Colors.grey[600],
+          onTap: _onItemTapped,
+          showUnselectedLabels: true,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          backgroundColor: Colors.white,
+          elevation: 10,
+          type: BottomNavigationBarType.fixed,
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'User',
+    );
+  }
+
+  Widget buildCard({
+    required String title,
+    required String description,
+    required VoidCallback onTap,
+    IconData icon = Icons.settings, // Default icon
+    bool isDestructive = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
           ),
         ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        onTap: _onItemTapped,
+      ),
+      padding: const EdgeInsets.all(12.0),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      child: ListTile(
+        leading: Icon(icon,
+            color: isDestructive ? Color(0xFF3539AC) : primaryColor,
+            size: 30), // Reduced size
+        title: Text(
+          title,
+          style: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold), // Reduced font size
+        ),
+        subtitle: Text(description),
+        trailing: Icon(Icons.arrow_forward_ios,
+            color: primaryColor, size: 20), // Reduced size
+        onTap: onTap,
       ),
     );
   }

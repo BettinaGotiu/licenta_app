@@ -328,101 +328,116 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(top: 10.0, left: 16.0, right: 16.0),
-            child: _buildRetroCard(
-              "Selected Pace: ${widget.selectedPace} WPM",
-            ),
-          ),
-          if (widget.prompt != null)
+      body: Container(
+        color: Color(0xFFEFF3FE), // Background color of the screen
+        child: Column(
+          children: <Widget>[
             Padding(
-              padding: const EdgeInsets.only(top: 5.0, left: 16.0, right: 16.0),
+              padding:
+                  const EdgeInsets.only(top: 10.0, left: 16.0, right: 16.0),
               child: _buildRetroCard(
-                "Prompt: ${widget.prompt}",
+                "Selected Pace: ${widget.selectedPace} WPM",
               ),
             ),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (widget.prompt == null)
-                  SizedBox(
-                      height: 30), // Additional space if prompt is not present
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 250,
-                        height: 250,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _getCircleColor(),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.5),
-                              spreadRadius: 5,
-                              blurRadius: 15,
-                              offset:
-                                  Offset(0, 3), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        formatElapsedTime(_elapsedStopwatch.elapsed),
-                        style: const TextStyle(
-                          fontSize: 48,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
+            if (widget.prompt != null)
+              Padding(
+                padding:
+                    const EdgeInsets.only(top: 5.0, left: 16.0, right: 16.0),
+                child: _buildRetroCard(
+                  "Prompt: ${widget.prompt}",
                 ),
-                SizedBox(height: 30), // Space between circle and warnings
-                Padding(
-                  padding: const EdgeInsets.only(
-                      left: 16.0, right: 16.0, bottom: 16.0),
-                  child: _buildRetroCard(
-                    'Warnings: $_warningMessage',
+              ),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (widget.prompt == null)
+                    SizedBox(
+                        height:
+                            30), // Additional space if prompt is not present
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 250,
+                          height: 250,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _getCircleColor(),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.5),
+                                spreadRadius: 5,
+                                blurRadius: 15,
+                                offset:
+                                    Offset(0, 3), // changes position of shadow
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          formatElapsedTime(_elapsedStopwatch.elapsed),
+                          style: const TextStyle(
+                            fontSize: 48,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 30), // Space between circle and warnings
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: 16.0, right: 16.0, bottom: 16.0),
+                    child: _buildRetroCard(
+                      'Warnings: $_warningMessage',
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                FloatingActionButton(
-                  onPressed: _isListening ? _stopListening : _startListening,
-                  tooltip: _isListening ? 'Stop Listening' : 'Start Listening',
-                  child: Icon(_isListening ? Icons.mic_off : Icons.mic),
-                ),
-                FloatingActionButton(
-                  onPressed: _startNewSession,
-                  tooltip: 'Start New Session',
-                  child: const Icon(Icons.replay),
-                ),
-                FloatingActionButton(
-                  onPressed: _stopListeningAndNavigate,
-                  tooltip: 'Stop and View Results',
-                  child: const Icon(Icons.stop),
-                ),
-                if (_isListening)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
                   FloatingActionButton(
-                    onPressed: () {},
-                    tooltip: 'Current WPM',
-                    child: Text(_currentWpm.toStringAsFixed(2)),
+                    onPressed: _isListening ? _stopListening : _startListening,
+                    tooltip:
+                        _isListening ? 'Stop Listening' : 'Start Listening',
+                    backgroundColor:
+                        Color(0xFFB3E5FC), // Light blue color for buttons
+                    child: Icon(_isListening ? Icons.mic_off : Icons.mic),
                   ),
-              ],
+                  FloatingActionButton(
+                    onPressed: _startNewSession,
+                    tooltip: 'Start New Session',
+                    backgroundColor:
+                        Color(0xFFB3E5FC), // Light blue color for buttons
+                    child: const Icon(Icons.replay),
+                  ),
+                  FloatingActionButton(
+                    onPressed: _stopListeningAndNavigate,
+                    tooltip: 'Stop and View Results',
+                    backgroundColor:
+                        Color(0xFFB3E5FC), // Light blue color for buttons
+                    child: const Icon(Icons.stop),
+                  ),
+                  if (_isListening)
+                    FloatingActionButton(
+                      onPressed: () {},
+                      tooltip: 'Current WPM',
+                      backgroundColor:
+                          Color(0xFFB3E5FC), // Light blue color for buttons
+                      child: Text(_currentWpm.toStringAsFixed(2)),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -432,11 +447,12 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       padding: const EdgeInsets.all(16.0),
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.black, width: 3),
+        color:
+            Color.fromARGB(255, 149, 153, 203), // Background color of the cards
+        border: Border.all(color: Color(0xFF11BDE3), width: 3), // Blue border
         boxShadow: [
           BoxShadow(
-            color: Colors.white,
+            color: Color(0xFF00008B), // Dark blue shadow
             spreadRadius: -2.5,
             offset: Offset(7, 7),
           ),
@@ -452,6 +468,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
+            color: Color.fromARGB(255, 0, 0, 0),
           ),
           textAlign: TextAlign.center,
         ),

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../reusable_widgets/reusable_widget.dart';
 import 'home_screen.dart';
 import '../utils/color_utils.dart';
+import 'signin_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -100,10 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          "Sign Up",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
+        automaticallyImplyLeading: false, // Remove the back arrow
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -111,8 +109,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              hexStringToColor("7766C6"),
-              hexStringToColor("8A72E6"),
+              Color(0xFF3539AC), // Darker blue
+              Color(0xFF11BDE3), // Lighter blue
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -120,12 +118,63 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 120, 20, 0),
+            padding:
+                const EdgeInsets.fromLTRB(20, 60, 20, 0), // Adjusted padding
             child: Form(
               key: _formKey,
               child: Column(
                 children: <Widget>[
-                  const SizedBox(height: 20),
+                  // Stylish Text above the logo
+                  Text(
+                    'Sign Up',
+                    style: TextStyle(
+                      fontSize: 28, // Adjusted font size
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.5,
+                      fontFamily: 'Roboto', // Use a modern font
+                      shadows: [
+                        Shadow(
+                          blurRadius: 10.0,
+                          color: Colors.black45,
+                          offset: Offset(2.0, 2.0),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(
+                    height: 10, // Reduced space between text and logo
+                  ),
+                  // Logo image
+                  Image.asset(
+                    "assets/images/cleartalk.png",
+                    height: 250, // Adjust the height as needed
+                    width: 250, // Adjust the width as needed
+                  ),
+                  const SizedBox(
+                    height: 10, // Reduced space between logo and motto
+                  ),
+                  // Stylish Text below the logo
+                  Text(
+                    'Speak more confidently in public',
+                    style: TextStyle(
+                      fontSize: 20, // Adjusted font size
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.5,
+                      fontFamily: 'Roboto', // Use a modern font
+                      shadows: [
+                        Shadow(
+                          blurRadius: 10.0,
+                          color: Colors.black45,
+                          offset: Offset(2.0, 2.0),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20), // Reduced space between elements
                   reusableTextField(
                     "Enter UserName",
                     Icons.person_outline,
@@ -138,7 +187,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15), // Reduced space between elements
                   reusableTextField(
                     "Enter Email Id",
                     Icons.email_outlined,
@@ -156,7 +205,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15), // Reduced space between elements
                   reusableTextField(
                     "Enter Password",
                     Icons.lock_outlined,
@@ -172,8 +221,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15), // Reduced space between elements
                   firebaseUIButton(context, "Sign Up", _signUp),
+                  const SizedBox(height: 15), // Reduced space between elements
+                  // Sign In option
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Already have an account?",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SigninScreen()),
+                          );
+                        },
+                        child: const Text(
+                          " Sign In",
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  )
                 ],
               ),
             ),
