@@ -40,12 +40,55 @@ class _ResultsScreenState extends State<ResultsScreen> {
   List<Map<String, dynamic>> _sessions = [];
   bool _showText = false;
   bool _showLastFive = true; // Track which data to display
+  List<String> _allWords = [];
 
   @override
   void initState() {
     super.initState();
     _commonWordCounts = {};
+    _fetchWordsAndCount();
     _fetchPreviousSessionsData();
+  }
+
+  Future<void> _fetchWordsAndCount() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('user_data')
+          .doc(user.uid)
+          .get();
+
+      List<String> personalizedWords = [];
+      if (snapshot.exists && snapshot.data() != null) {
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+        if (data.containsKey('commonWordCounts')) {
+          personalizedWords = data['commonWordCounts'].keys.toList();
+        }
+      }
+
+      setState(() {
+        _allWords = [...commonWords, ...personalizedWords];
+        _countCommonWords();
+      });
+    }
+  }
+
+  void _countCommonWords() {
+    // Initialize counts to 0
+    _allWords.forEach((expression) {
+      _commonWordCounts[expression] = 0;
+    });
+
+    // Count occurrences of each expression
+    for (String expression in _allWords) {
+      _commonWordCounts[expression] =
+          _countOccurrences(widget.spokenText, expression);
+    }
+  }
+
+  int _countOccurrences(String text, String pattern) {
+    RegExp regExp = RegExp(RegExp.escape(pattern), caseSensitive: false);
+    return regExp.allMatches(text).length;
   }
 
   Future<void> _fetchPreviousSessionsData() async {
@@ -77,6 +120,50 @@ class _ResultsScreenState extends State<ResultsScreen> {
     if (percentage > 40) return Colors.yellow;
     if (percentage > 0) return Colors.red;
     return Colors.grey;
+  }
+
+  List<TextSpan> _buildHighlightedText(String text) {
+    List<TextSpan> spans = [];
+    text.split(' ').forEach((word) {
+      if (_commonWordCounts.containsKey(word.toLowerCase()) &&
+          _commonWordCounts[word.toLowerCase()]! >= 2) {
+        spans.add(TextSpan(
+            text: '$word ',
+            style: TextStyle(
+                color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)));
+      } else {
+        spans.add(TextSpan(
+            text: '$word ',
+            style: TextStyle(fontSize: 16, color: Colors.black)));
+      }
+    });
+    return spans;
+  }
+
+  void _showSpokenTextPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Spoken Text"),
+          content: SingleChildScrollView(
+            child: RichText(
+              text: TextSpan(
+                children: _buildHighlightedText(widget.spokenText),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -356,7 +443,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                 style: TextStyle(
                                     fontSize: 18, fontWeight: FontWeight.bold)),
                             ..._commonWordCounts.entries
-                                .where((entry) => entry.value > 2)
+                                .where((entry) => entry.value >= 2)
                                 .map((entry) {
                               return Row(
                                 mainAxisAlignment:
@@ -431,28 +518,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showSpokenTextPopup() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Spoken Text"),
-          content: SingleChildScrollView(
-            child: Text(widget.spokenText),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("Close"),
-            ),
-          ],
-        );
-      },
     );
   }
 }
