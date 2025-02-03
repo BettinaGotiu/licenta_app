@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mrx_charts/mrx_charts.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'home_screen.dart';
 import 'common_words.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 
 // Define the color palette
 final Color primaryColor = Color(0xFF3539AC);
@@ -166,6 +166,27 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
+  void _showHelpPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Filler Words"),
+          content: Text(
+              "Track filler words, which are commonly used words in speeches and daily conversations. These words should be avoided for more effective communication."),
+          actions: [
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double improvement = _lastSessionsAverage != null
@@ -189,6 +210,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
     double chartWidth =
         displayedSessions.length * 60.0; // Adjust width as needed
     double maxChartWidth = _sessions.length * 60.0; // Width for all sessions
+
+    int maxOccurrence = _commonWordCounts.values.isNotEmpty
+        ? _commonWordCounts.values.reduce((a, b) => a > b ? a : b)
+        : 0;
+
+    int minOccurrence = _commonWordCounts.values.isNotEmpty
+        ? _commonWordCounts.values.reduce((a, b) => a < b ? a : b)
+        : 0;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -418,7 +447,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
                               _showLastFive = true;
                             });
                           },
-                          child: Text("Last 5 Sessions"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: secondaryColor,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: Text(
+                            "Last 5 Sessions",
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
                         ),
                         ElevatedButton(
                           onPressed: () {
@@ -426,42 +466,101 @@ class _ResultsScreenState extends State<ResultsScreen> {
                               _showLastFive = false;
                             });
                           },
-                          child: Text("All Sessions"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: secondaryColor,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: Text(
+                            "All Sessions",
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
                         ),
                       ],
                     ),
                     SizedBox(height: 30),
 
                     // Filler Words Card
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Filler Words',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            ..._commonWordCounts.entries
-                                .where((entry) => entry.value >= 2)
-                                .map((entry) {
-                              return Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(entry.key,
-                                      style: TextStyle(fontSize: 16)),
-                                  Text('${entry.value}',
-                                      style: TextStyle(fontSize: 16)),
-                                ],
-                              );
-                            }).toList(),
-                            if (!_commonWordCounts.values
-                                .any((count) => count > 2))
-                              Text(
-                                  'Great job! No common words appeared more than twice.'),
-                          ],
-                        ),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.black, width: 3),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.grey,
+                            offset: Offset(0, 3),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text('Filler Words',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
+                              IconButton(
+                                icon: Icon(Icons.help_outline,
+                                    color: Colors.grey),
+                                onPressed: _showHelpPopup,
+                              ),
+                            ],
+                          ),
+                          ..._commonWordCounts.entries
+                              .where((entry) => entry.value >= 2)
+                              .map((entry) {
+                            double lineWidth = maxOccurrence != 0
+                                ? (entry.value / maxOccurrence) * 200
+                                : 0;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Checkbox(
+                                          value: true, // Checked by default
+                                          onChanged: (bool? value) {},
+                                        ),
+                                        SizedBox(width: 5),
+                                        Text(entry.key,
+                                            style: TextStyle(fontSize: 16)),
+                                      ],
+                                    ),
+                                    Text('${entry.value}',
+                                        style: TextStyle(fontSize: 16)),
+                                  ],
+                                ),
+                                Container(
+                                  width: lineWidth,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: secondaryColor,
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 5),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                          if (!_commonWordCounts.values
+                              .any((count) => count >= 2))
+                            Text(
+                                'Great job! No common words appeared more than twice.'),
+                        ],
                       ),
                     ),
                     SizedBox(height: 30),
@@ -469,7 +568,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     // Access Speech Text Button
                     ElevatedButton(
                       onPressed: () => _showSpokenTextPopup(),
-                      child: Text("Access Speech Text"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: secondaryColor,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: Text(
+                        "Access Speech Text",
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -535,7 +645,7 @@ class ContourPainter extends CustomPainter {
       ..strokeWidth = 8; // Adjusted to make it more visible
 
     final Paint backgroundPaint = Paint()
-      ..color = Colors.grey[300]!
+      ..color = Colors.grey
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8; // Adjusted to make it more visible
 
