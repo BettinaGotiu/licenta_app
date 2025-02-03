@@ -14,7 +14,8 @@ class SpeechToTextPage extends StatefulWidget {
   _SpeechToTextPageState createState() => _SpeechToTextPageState();
 }
 
-class _SpeechToTextPageState extends State<SpeechToTextPage> {
+class _SpeechToTextPageState extends State<SpeechToTextPage>
+    with SingleTickerProviderStateMixin {
   late stt.SpeechToText _speech;
   bool _isListening = false;
   String _currentText = "";
@@ -40,10 +41,28 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
   final int _intervalDuration = 6;
   int _listeningSessionCounter = 0;
 
+  late AnimationController _animationController;
+  late Animation<double> _sizeAnimation;
+
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
+
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _sizeAnimation = Tween<double>(begin: 250.0, end: 270.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   int _countWords(String text) {
@@ -121,10 +140,14 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
           if (_currentWpm < lowerLimit) {
             _warningMessage = "You are talking too slow, pick the pace up.";
+            _animationController.repeat(reverse: true);
           } else if (_currentWpm > upperLimit) {
             _warningMessage = "Your talking pace is too fast, go slower.";
+            _animationController.repeat(reverse: true);
           } else {
             _warningMessage = "You are right on track, go on!";
+            _animationController.stop();
+            _animationController.value = 1.0;
             _withinLimitCount++;
           }
         });
@@ -146,6 +169,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     setState(() {
       _isListening = false;
       _stopwatch.stop();
+      _animationController.stop();
 
       if (_currentText.isNotEmpty) {
         int duration = _stopwatch.elapsed.inSeconds;
@@ -180,10 +204,14 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
           if (_currentWpm < lowerLimit) {
             _warningMessage = "You are talking too slow, pick the pace up.";
+            _animationController.repeat(reverse: true);
           } else if (_currentWpm > upperLimit) {
             _warningMessage = "Your talking pace is too fast, go slower.";
+            _animationController.repeat(reverse: true);
           } else {
             _warningMessage = "You are right on track, go on!";
+            _animationController.stop();
+            _animationController.value = 1.0;
             _withinLimitCount++;
           }
         }
@@ -280,7 +308,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
   Color _getCircleColor() {
     if (_wpmHistory.isEmpty) {
-      return Colors.grey;
+      return Color(0xFFa6c6ed); // Default color when no data is available
     }
 
     int lowerLimit, upperLimit;
@@ -303,7 +331,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     }
 
     if (_currentWpm == 0) {
-      return Colors.grey;
+      return Color(0xFFa6c6ed); // Default color when WPM is 0
     } else if (_currentWpm < lowerLimit * 0.95) {
       return Colors.red;
     } else if (_currentWpm > upperLimit * 1.05) {
@@ -317,9 +345,6 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double cardWidth = MediaQuery.of(context).size.width * 0.7;
-    final double cardHeight = 80;
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -346,37 +371,36 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 250,
-                          height: 250,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _getCircleColor(),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.5),
-                                spreadRadius: 5,
-                                blurRadius: 15,
-                                offset:
-                                    Offset(0, 3), // changes position of shadow
-                              ),
-                            ],
+                  AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Container(
+                        width: _sizeAnimation.value,
+                        height: _sizeAnimation.value,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _getCircleColor(),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.5),
+                              spreadRadius: 5,
+                              blurRadius: 15,
+                              offset:
+                                  Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            formatElapsedTime(_elapsedStopwatch.elapsed),
+                            style: const TextStyle(
+                              fontSize: 48,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                        Text(
-                          formatElapsedTime(_elapsedStopwatch.elapsed),
-                          style: const TextStyle(
-                            fontSize: 48,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   SizedBox(height: 30), // Space between circle and warnings
                   Padding(
@@ -384,6 +408,9 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
                         left: 16.0, right: 16.0, bottom: 16.0),
                     child: _buildRetroCard(
                       'Warnings: $_warningMessage',
+                      fontSize:
+                          20.0, // Increased font size for better visibility
+                      padding: EdgeInsets.all(20.0), // Increased padding
                     ),
                   ),
                 ],
@@ -433,9 +460,11 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
     );
   }
 
-  Widget _buildRetroCard(String text) {
+  Widget _buildRetroCard(String text,
+      {double fontSize = 16.0,
+      EdgeInsets padding = const EdgeInsets.all(16.0)}) {
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: padding,
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       decoration: BoxDecoration(
         color: Colors.white, // Background color of the cards
@@ -453,8 +482,8 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       child: Center(
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 16,
+          style: TextStyle(
+            fontSize: fontSize,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
