@@ -317,6 +317,9 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double cardWidth = MediaQuery.of(context).size.width * 0.7;
+    final double cardHeight = 80;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -339,22 +342,10 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
                 "Selected Pace: ${widget.selectedPace} WPM",
               ),
             ),
-            if (widget.prompt != null)
-              Padding(
-                padding:
-                    const EdgeInsets.only(top: 5.0, left: 16.0, right: 16.0),
-                child: _buildRetroCard(
-                  "Prompt: ${widget.prompt}",
-                ),
-              ),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (widget.prompt == null)
-                    SizedBox(
-                        height:
-                            30), // Additional space if prompt is not present
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Stack(
@@ -447,18 +438,15 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
       padding: const EdgeInsets.all(16.0),
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       decoration: BoxDecoration(
-        color:
-            Color.fromARGB(255, 149, 153, 203), // Background color of the cards
-        border: Border.all(color: Color(0xFF11BDE3), width: 3), // Blue border
+        color: Colors.white, // Background color of the cards
+        border: Border.all(color: Colors.black, width: 3), // Black border
+        borderRadius: BorderRadius.circular(12), // Rounded corners
         boxShadow: [
           BoxShadow(
-            color: Color(0xFF00008B), // Dark blue shadow
-            spreadRadius: -2.5,
-            offset: Offset(7, 7),
-          ),
-          BoxShadow(
-            color: Colors.black,
-            offset: Offset(7, 7),
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, 3), // Offset for shadow
           ),
         ],
       ),
@@ -468,7 +456,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color.fromARGB(255, 0, 0, 0),
+            color: Colors.black,
           ),
           textAlign: TextAlign.center,
         ),
