@@ -52,7 +52,7 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
     _animationController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
     _sizeAnimation = Tween<double>(begin: 250.0, end: 270.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
@@ -138,16 +138,20 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
               upperLimit = 0;
           }
 
-          if (_currentWpm < lowerLimit) {
-            _warningMessage = "You are talking too slow, pick the pace up.";
-            _animationController.repeat(reverse: true);
-          } else if (_currentWpm > upperLimit) {
-            _warningMessage = "Your talking pace is too fast, go slower.";
+          if (_currentWpm < lowerLimit * 0.95 ||
+              _currentWpm > upperLimit * 1.05) {
             _animationController.repeat(reverse: true);
           } else {
-            _warningMessage = "You are right on track, go on!";
             _animationController.stop();
             _animationController.value = 1.0;
+          }
+
+          if (_currentWpm < lowerLimit) {
+            _warningMessage = "You are talking too slow, pick the pace up.";
+          } else if (_currentWpm > upperLimit) {
+            _warningMessage = "Your talking pace is too fast, go slower.";
+          } else {
+            _warningMessage = "You are right on track, go on!";
             _withinLimitCount++;
           }
         });
@@ -202,16 +206,20 @@ class _SpeechToTextPageState extends State<SpeechToTextPage>
               upperLimit = 0;
           }
 
-          if (_currentWpm < lowerLimit) {
-            _warningMessage = "You are talking too slow, pick the pace up.";
-            _animationController.repeat(reverse: true);
-          } else if (_currentWpm > upperLimit) {
-            _warningMessage = "Your talking pace is too fast, go slower.";
+          if (_currentWpm < lowerLimit * 0.95 ||
+              _currentWpm > upperLimit * 1.05) {
             _animationController.repeat(reverse: true);
           } else {
-            _warningMessage = "You are right on track, go on!";
             _animationController.stop();
             _animationController.value = 1.0;
+          }
+
+          if (_currentWpm < lowerLimit) {
+            _warningMessage = "You are talking too slow, pick the pace up.";
+          } else if (_currentWpm > upperLimit) {
+            _warningMessage = "Your talking pace is too fast, go slower.";
+          } else {
+            _warningMessage = "You are right on track, go on!";
             _withinLimitCount++;
           }
         }
