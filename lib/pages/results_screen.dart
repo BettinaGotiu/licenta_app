@@ -6,6 +6,16 @@ import 'home_screen.dart';
 import 'common_words.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
+
+// Define the color palette
+final Color primaryColor = Color(0xFF3539AC);
+final Color secondaryColor = Color(0xFF11BDE3);
+final Color accentColor = Color(0xFFFF3926);
+final Color cardColor = Color(0xFF973462);
+final Color chartLineColor = Color(0xFF7670B9);
+final Color backgroundColor = Color(0xFFEFF3FE);
+final Color textColor = Colors.black87;
 
 class ResultsScreen extends StatefulWidget {
   final String spokenText;
@@ -76,6 +86,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
         : 0.0;
 
     Color contourColor = _getContourColor(widget.withinLimitPercentage);
+    Color borderColor;
+
+    if (improvement > 0) {
+      borderColor = Colors.green;
+    } else if (improvement < 0) {
+      borderColor = Colors.red;
+    } else {
+      borderColor = Colors.yellow;
+    }
 
     List<Map<String, dynamic>> displayedSessions =
         _showLastFive ? _sessions.take(5).toList() : _sessions;
@@ -85,7 +104,46 @@ class _ResultsScreenState extends State<ResultsScreen> {
     double maxChartWidth = _sessions.length * 60.0; // Width for all sessions
 
     return Scaffold(
-      appBar: AppBar(title: Text('Results')),
+      backgroundColor: backgroundColor,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(140.0),
+        child: ClipPath(
+          clipper: WaveClipperTwo(),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryColor, secondaryColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 30.0, bottom: 20.0, left: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  Text(
+                    'Results',
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Nacelle',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -101,7 +159,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       child: Text(
                         'Within Limit Percentage',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
@@ -152,8 +210,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         Column(
                           children: [
                             Container(
-                              width: 70,
-                              height: 70,
+                              width: 90,
+                              height: 90,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border:
@@ -175,8 +233,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         Column(
                           children: [
                             Container(
-                              width: 70,
-                              height: 70,
+                              width: 90,
+                              height: 90,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border:
@@ -212,22 +270,32 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     SizedBox(height: 30),
 
                     // Message Card
-                    Card(
-                      color: Colors.blue.shade50,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          improvement > 0
-                              ? 'Great job! Your within limit percentage has improved by ${improvement.toStringAsFixed(2)}%'
-                              : improvement < 0
-                                  ? 'Keep trying! Your within limit percentage is lower by ${improvement.abs().toStringAsFixed(2)}%'
-                                  : 'You have maintained the same within limit percentage as previous sessions.',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: borderColor, width: 3),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.grey,
+                            offset: Offset(0, 3),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        improvement > 0
+                            ? 'Great job! Your within limit percentage has improved by ${improvement.toStringAsFixed(2)}%'
+                            : improvement < 0
+                                ? 'Keep trying! Your within limit percentage is lower by ${improvement.abs().toStringAsFixed(2)}%'
+                                : 'You have maintained the same within limit percentage as previous sessions.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                     SizedBox(height: 30),
