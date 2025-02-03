@@ -187,6 +187,48 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
+  void _showWithinLimitPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Within Limit Percentage"),
+          content: Text(
+              "Percentage of user respecting the selected limits during the session."),
+          actions: [
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showProgressBarPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Progress Bar"),
+          content: Text(
+              "Access to your data so you can track your progress in time."),
+          actions: [
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double improvement = _lastSessionsAverage != null
@@ -270,16 +312,24 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       CrossAxisAlignment.start, // Align to the left
                   children: [
                     // Stylish Text
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16.0),
-                      child: Text(
-                        'Within Limit Percentage',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: Text(
+                            'Within Limit Percentage',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
-                      ),
+                        IconButton(
+                          icon: Icon(Icons.help_outline, color: Colors.grey),
+                          onPressed: _showWithinLimitPopup,
+                        ),
+                      ],
                     ),
                     SizedBox(height: 10),
 
@@ -415,6 +465,28 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       ),
                     ),
                     SizedBox(height: 30),
+
+                    // Progress Bar Title and Help Icon
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: Text(
+                            'Progress Bar',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.help_outline, color: Colors.grey),
+                          onPressed: _showProgressBarPopup,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
 
                     // Line Chart
                     SingleChildScrollView(
@@ -566,19 +638,21 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     SizedBox(height: 30),
 
                     // Access Speech Text Button
-                    ElevatedButton(
-                      onPressed: () => _showSpokenTextPopup(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: secondaryColor,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () => _showSpokenTextPopup(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: secondaryColor,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        "Access Speech Text",
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+                        child: Text(
+                          "Access Speech Text",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                       ),
                     ),
                   ],
