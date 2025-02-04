@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +7,8 @@ import 'home_screen.dart';
 import 'settings_screen.dart';
 import 'signin_screen.dart';
 import 'personalized_words_page.dart';
+import 'sessions_screen.dart';
+import 'sessions_service.dart';
 
 // Define the color palette
 final Color primaryColor = Color(0xFF3539AC);
@@ -32,6 +33,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   bool _isEditMode = false;
   bool _isLoading = true;
   bool _noSessionsFound = false;
+  final SessionService _sessionService = SessionService();
 
   @override
   void initState() {
@@ -41,29 +43,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _fetchSessionData() async {
-    if (user != null) {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('user_data')
-          .doc(user!.uid)
-          .collection('sessions')
-          .orderBy('date')
-          .get();
-
-      await Future.delayed(const Duration(seconds: 0)); // Artificial delay
-
-      setState(() {
-        _sessions = snapshot.docs
-            .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
-            .toList();
-        _isLoading = false;
-        _noSessionsFound = _sessions.isEmpty;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-        _noSessionsFound = true;
-      });
-    }
+    final sessions = await _sessionService.fetchSessionData();
+    setState(() {
+      _sessions = sessions;
+      _isLoading = false;
+      _noSessionsFound = _sessions.isEmpty;
+    });
   }
 
   void _onItemTapped(int index) {
@@ -135,16 +120,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _deleteSession(String sessionId) async {
-    if (user != null) {
-      await FirebaseFirestore.instance
-          .collection('user_data')
-          .doc(user!.uid)
-          .collection('sessions')
-          .doc(sessionId)
-          .delete();
-
-      _fetchSessionData();
-    }
+    await _sessionService.deleteSession(sessionId);
+    _fetchSessionData();
   }
 
   void _confirmDeleteSession(String sessionId, String sessionDateTime) {
@@ -304,8 +281,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) =>
-                                                        SessionDetailScreen(
+                                                        SessionScreen(
                                                       session: _sessions[index],
+                                                      sessionNumber: index + 1,
                                                     ),
                                                   ),
                                                 );
@@ -470,56 +448,6 @@ class SessionNode extends StatelessWidget {
           style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
       ],
-    );
-  }
-}
-
-class SessionDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> session;
-
-  const SessionDetailScreen({Key? key, required this.session})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text('Session Details'),
-        backgroundColor: primaryColor,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Date: ${session['date']}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Average WPM: ${session['averageWpm']}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Within Limit Percentage: ${session['withinLimitPercentage']}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Spoken Text: ${session['spokenText']}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Common Word Counts: ${session['commonWordCounts']}',
-              style: const TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

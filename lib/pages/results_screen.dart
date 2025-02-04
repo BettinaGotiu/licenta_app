@@ -9,6 +9,7 @@ import 'settings_screen.dart';
 import 'common_words.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
+import 'saving_service.dart'; // Import the save_session.dart file
 
 // Define the color palette
 final Color primaryColor = Color(0xFF3539AC);
@@ -114,6 +115,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
             : 0.0;
         _isLoading = false;
       });
+
+      // Save the current session
+      await saveSession(
+        spokenText: widget.spokenText,
+        averageWpm: widget.averageWpm,
+        withinLimitPercentage: widget.withinLimitPercentage,
+        commonWordCounts: _commonWordCounts,
+      );
     }
   }
 
@@ -638,8 +647,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       ),
                     ),
                     SizedBox(height: 30),
-
-                    // Access Speech Text Button
                     Center(
                       child: ElevatedButton(
                         onPressed: () => _showSpokenTextPopup(),
