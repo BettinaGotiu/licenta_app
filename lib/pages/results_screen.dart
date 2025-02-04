@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:licenta_app/pages/settings_screen.dart';
 import 'package:mrx_charts/mrx_charts.dart';
 import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'home_screen.dart';
+import 'settings_screen.dart';
 import 'common_words.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
@@ -659,6 +661,34 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 ),
               ),
             ),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomAppBar(
+          color: Colors.white,
+          elevation: 10,
+          shape: CircularNotchedRectangle(),
+          notchMargin: 8.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center, // Center the home icon
+            children: [
+              IconButton(
+                icon: Icon(Icons.home,
+                    size: 24,
+                    color: Colors.grey[600]), // Gray color for unselected state
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
