@@ -48,6 +48,12 @@ flutter build
 # Run the app
 flutter run
 ```
+#### ➡️ Make sure you have either:
+
+- An Android emulator 
+
+- A physical Android device connected via USB with Developer Mode enabled
+  
 ## 🌍 SCMUPT Participation 
 
 ClearTalk won **1st place** at **SCMUPT 2025**, the 13th edition of the annual *Mobile Apps Communication Session* hosted by the **Faculty of Automation and Computers**, *Politehnica University of Timișoara*.
