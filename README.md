@@ -1,5 +1,10 @@
 <h1 align="center">ClearTalk</h1>
 
+## 📂 Source Code
+
+The full source code of the ClearTalk mobile application is available on GitHub:  
+🔗 [GitHub Repository – ClearTalk](https://github.com/BettinaGotiu/licenta_app)
+
 ## 📌 Scope
 
 **ClearTalk** is a mobile application designed to help users practice and improve their public speaking skills.  
