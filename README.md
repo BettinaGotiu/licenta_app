@@ -53,6 +53,73 @@ flutter build
 # Run the app
 flutter run
 ```
+# 🔑 Firebase Configuration Guide
+
+In order to run **ClearTalk** and access the real-time database, users must configure Firebase locally by adding a `google-services.json` file to the project.
+
+---
+
+## 📁 Setup Instructions
+
+1. **Go to [Firebase Console](https://console.firebase.google.com/).**
+
+2. **Create a new project** or request access to the existing project (for contributors).
+
+3. **Navigate to:**  
+   _Project Settings_ → _Your Apps_ → **Add Android app**
+
+4. **Register your app** using this package name:
+   ```
+   com.example.licenta_app
+   ```
+
+5. **Download** the generated `google-services.json` file.
+
+6. **Place the file in your project at:**
+   ```
+   android/app/google-services.json
+   ```
+
+---
+
+## 🧩 Example: Minimal `google-services.json` Template
+
+> _This is a **template/minimal example** — do not include real API keys or OAuth tokens in public repositories._
+
+```json
+{
+  "project_info": {
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "YOUR_PROJECT_ID",
+    "storage_bucket": "YOUR_STORAGE_BUCKET"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "YOUR_MOBILESDK_APP_ID",
+        "android_client_info": {
+          "package_name": "com.example.licenta_app"
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+```
+
+
+## ✅ Automatic Database Setup
+
+Once the app is running and a user creates an account, all required collections and documents are automatically created in Firestore — _no manual database setup needed!_
+
+This includes:
+
+- `users` collection with individual user documents
+- `sessions` subcollections for each user
+- `settings` documents, progress tracking, and more
+
+---
+
 #### ➡️ Make sure you have either:
 
 - An Android emulator 
