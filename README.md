@@ -5,34 +5,6 @@
 The full source code of the ClearTalk mobile application is available on GitHub:  
 🔗 [GitHub Repository – ClearTalk](https://github.com/BettinaGotiu/licenta_app)
 
-## 📌 Scope
-
-**ClearTalk** is a mobile application designed to help users practice and improve their public speaking skills.  
-It provides real-time analysis of spoken content, focusing on pace, filler word detection, and performance tracking.
-
-## 🚀 Main Functionalities
-
-- User authentication (Sign up / Log in)
-- Real-time speech-to-text transcription
-- Detection and highlighting of filler words (e.g., "um", "so", "basically")
-- Visual pacing feedback using color-coded indicators
-- Custom word tracking (e.g., personal speech tics)
-- Exercise prompts and daily speaking challenges
-- Session history, statistics, and progress graph
-- Streak tracking and calendar highlighting
-- Transcript review with bolded filler words
-- Cloud storage using Firebase
-- Help buttons integrated throughout the UI
-
-
-## 🛠️ Technologies Used
-
-- **Flutter** (Cross-platform app framework)
-- **Firebase** (Authentication, Firestore, Storage)
-- **speech_to_text** (for voice transcription)
-- **charts_flutter / mrx_charts** (for data visualization)
-- **table_calendar** (for calendar-based streak tracking)
-
 ## ⚙️ Local Setup Instructions
 
 ```bash
@@ -83,8 +55,6 @@ In order to run **ClearTalk** and access the real-time database, users must conf
 ---
 
 ## 🧩 Example: Minimal `google-services.json` Template
-
-> _This is a **template/minimal example** — do not include real API keys or OAuth tokens in public repositories._
 
 ```json
 {
