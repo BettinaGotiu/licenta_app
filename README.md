@@ -1,60 +1,60 @@
 <h1 align="center">ClearTalk</h1>
 
-## 📂 Source Code
+## 📂 Cod Sursă
 
-The full source code of the ClearTalk mobile application is available on GitHub:  
-🔗 [GitHub Repository – ClearTalk](https://github.com/BettinaGotiu/licenta_app)
+Codul sursă complet al aplicației mobile ClearTalk este disponibil pe GitHub:  
+🔗 [Repository GitHub – ClearTalk](https://github.com/BettinaGotiu/licenta_app)
 
-## ⚙️ Local Setup Instructions
+## ⚙️ Instrucțiuni pentru Instalare Locală
 
 ```bash
-# Clone the repo
+# Clonează repo-ul
 git clone <repo-url>
 cd licenta_app
 
-# Install dependencies
+# Instalează dependențele
 flutter pub get
 
-# Build the application
+# Compilează aplicația
 flutter build
 
-# NOTE: Add your Firebase configuration files:
-# - google-services.json (for Android)
-# - GoogleService-Info.plist (for iOS, if needed)
+# NOTĂ: Adaugă fișierele tale de configurare Firebase:
+# - google-services.json (pentru Android)
+# - GoogleService-Info.plist (pentru iOS, dacă este nevoie)
 
-# Run the app
+# Pornește aplicația
 flutter run
 ```
-# 🔑 Firebase Configuration Guide
+# 🔑 Ghid Configurare Firebase
 
-In order to run **ClearTalk** and access the real-time database, users must configure Firebase locally by adding a `google-services.json` file to the project.
+Pentru a rula **ClearTalk** și a accesa baza de date în timp real, utilizatorii trebuie să configureze local Firebase, adăugând un fișier `google-services.json` în proiect.
 
 ---
 
-## 📁 Setup Instructions
+## 📁 Instrucțiuni de Configurare
 
-1. **Go to [Firebase Console](https://console.firebase.google.com/).**
+1. **Accesează [Firebase Console](https://console.firebase.google.com/).**
 
-2. **Create a new project** or request access to the existing project (for contributors).
+2. **Creează un proiect nou** sau cere acces la proiectul existent (pentru colaboratori).
 
-3. **Navigate to:**  
+3. **Navighează la:**  
    _Project Settings_ → _Your Apps_ → **Add Android app**
 
-4. **Register your app** using this package name:
+4. **Înregistrează aplicația** folosind acest nume de pachet:
    ```
    com.example.licenta_app
    ```
 
-5. **Download** the generated `google-services.json` file.
+5. **Descarcă** fișierul `google-services.json` generat.
 
-6. **Place the file in your project at:**
+6. **Plasează fișierul în proiect la:**
    ```
    android/app/google-services.json
    ```
 
 ---
 
-## 🧩 Example: Minimal `google-services.json` Template
+## 🧩 Exemplu: Șablon Minimal `google-services.json`
 
 ```json
 {
@@ -77,36 +77,35 @@ In order to run **ClearTalk** and access the real-time database, users must conf
 }
 ```
 
+## ✅ Configurare automată a bazei de date
 
-## ✅ Automatic Database Setup
+După ce aplicația rulează și un utilizator își creează un cont, toate colecțiile și documentele necesare sunt create automat în Firestore — _nu este nevoie de configurare manuală a bazei de date!_
 
-Once the app is running and a user creates an account, all required collections and documents are automatically created in Firestore — _no manual database setup needed!_
+Acest lucru include:
 
-This includes:
-
-- `users` collection with individual user documents
-- `sessions` subcollections for each user
-- `settings` documents, progress tracking, and more
+- colecția `users` cu documente individuale pentru fiecare utilizator
+- subcolecțiile `sessions` pentru fiecare utilizator
+- documente de tip `settings`, urmărirea progresului și altele
 
 ---
 
-#### ➡️ Make sure you have either:
+#### ➡️ Asigură-te că ai fie:
 
-- An Android emulator 
+- Un emulator Android 
 
-- A physical Android device connected via USB with Developer Mode enabled
+- Un dispozitiv Android fizic conectat prin USB, cu Modul de Dezvoltator activat
   
-## 🌍 SCMUPT Participation 
+## 🌍 Participarea la SCMUPT 
 
-ClearTalk won **1st place** at **SCMUPT 2025**, the 13th edition of the annual *Mobile Apps Communication Session* hosted by the **Faculty of Automation and Computers**, *Politehnica University of Timișoara*.
+ClearTalk a câștigat **locul 1** la **SCMUPT 2025**, ediția a 13-a a *Mobile Apps Communication Session* organizată de **Facultatea de Automatică și Calculatoare**, *Universitatea Politehnica Timișoara*.
 
-The competition encourages students to develop impactful mobile applications across two categories:  
-**Utility & Lifestyle** and **Community, Entertainment & Games**.
+Competiția încurajează studenții să dezvolte aplicații mobile cu impact în două categorii:  
+**Utilitate & Stil de viață** și **Comunitate, Divertisment & Jocuri**.
 
 ---
 
-### 🔗 Useful Links
+### 🔗 Linkuri Utile
 
-- 📊 [SCMUPT 2025 Results](https://sites.google.com/view/scmupt/home?authuser=0)  
-- 🎥 [Interview & Demo Video](https://www.youtube.com/watch?v=ccrvT67X5Fo)
-- 📱 [Watch the Full Demo](https://github.com/BettinaGotiu/licenta_app/blob/main/ClearTalk_Demo.mp4)
+- 📊 [Rezultate SCMUPT 2025](https://sites.google.com/view/scmupt/home?authuser=0)  
+- 🎥 [Interviu & Video Demo](https://www.youtube.com/watch?v=ccrvT67X5Fo)
+- 📱 [Urmărește Demo-ul Complet](https://github.com/BettinaGotiu/licenta_app/blob/main/ClearTalk_Demo.mp4)
